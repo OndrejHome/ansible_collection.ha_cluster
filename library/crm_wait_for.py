@@ -203,7 +203,8 @@ def run_module():
         result['cluster_nodes'].add(node.attrib.get('name'))
 
     if not rsc_desired_node_set.issubset(result['cluster_nodes']):
-        result['msg'] = "node_list contain a node that is not present in cluster."
+        result['msg'] = "node_list contains a node that is not present in cluster."
+        result['node_list'] = node_list
         module.fail_json(**result)
 
     # determine the start and end of timeout
