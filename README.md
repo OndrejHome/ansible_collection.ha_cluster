@@ -7,7 +7,7 @@ Purpose of this module is to provide ability to wait for resources in pacemaker 
 ## ansible-doc crm_wait_for
 
 ~~~
-# ansible-doc -M library/crm_wait_for
+# ansible-doc -M library/ crm_wait_for
 > CRM_WAIT_FOR    (ansible.crm_wait_for/library/crm_wait_for.py)
 
         This module can wait for resource in cluster to become simply

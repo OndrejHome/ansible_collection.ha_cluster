@@ -1,0 +1,183 @@
+---
+- hosts: f33
+  roles:
+    - ondrejhome.pcs-modules-2
+    - ondrejhome.crm_wait_for
+  tasks:
+    - name: tests 00 - print basic system information
+      block:
+        - name: get crm_mon version
+          command: crm_mon --version
+          register: crm_mon
+          changed_when: false
+        - name: print crm_mon version
+          debug:
+            var: crm_mon.stdout
+      run_once: True
+    - name: tests 01 - resource is present/absent
+      block:
+        - name: make sure that resource 'resA' doesn't exists
+          pcs_resource:
+            name: 'resA'
+            state: 'absent'
+        - name: 01-01 wait for 'resA' resource to get defined in cluster config - this should fail
+          crm_wait_for:
+            resource: 'resA'
+            state: 'present'
+            timeout: '10'
+          ignore_errors: true
+        - name: 01-02 wait for 'resA' resource to get removed from cluster configuration - this should succeed
+          crm_wait_for:
+            resource: 'resA'
+            state: 'absent'
+        - name: create resource 'resA'
+          pcs_resource:
+            name: 'resA'
+            resource_type: 'ocf:pacemaker:Dummy'
+        - name: 01-03 wait for 'resA' resource to get defined in cluster config - this should succeed
+          crm_wait_for:
+            resource: 'resA'
+            state: 'present'
+      run_once: True
+    - name: tests 02 - resource is Started/Stopped
+      block:
+        - name: create resource 'resA'
+          pcs_resource:
+            name: 'resA'
+            resource_type: 'ocf:pacemaker:Dummy'
+        - name: 02-01 wait for 'resA' resource to get 'Started' anywhere in cluster - this should succeed
+          crm_wait_for:
+            resource: 'resA'
+            state: 'Started'
+            timeout: '10'
+        - name: disable resource 'resA'
+          pcs_resource:
+            name: 'resA'
+            resource_type: 'ocf:pacemaker:Dummy'
+            options: 'meta target-role=Stopped'
+        - name: 02-02 wait for 'resA' resource to get 'Stopped' in cluster - this should succeed
+          crm_wait_for:
+            resource: 'resA'
+            state: 'Stopped'
+            timeout: '10'
+      run_once: True
+    - name: tests 03 - resource is Master/Slave
+      block:
+        - name: create resource 'resB' (1/2) - old 'master' keyword
+          pcs_resource:
+            name: 'resB'
+            resource_type: 'ocf:pacemaker:Stateful'
+            options: 'master'
+          ignore_errors: true
+        - name: create resource 'resB' (2/2) - new 'promotable' keyword
+          pcs_resource:
+            name: 'resB'
+            resource_type: 'ocf:pacemaker:Stateful'
+            options: 'promotable'
+          ignore_errors: true
+        - name: 03-01 wait for 'resB' resource to get 'Slave' anywhere in cluster - this should succeed
+          crm_wait_for:
+            resource: 'resB'
+            state: 'Slave'
+            timeout: '10'
+          register: state_slave
+        - name: 03-02 wait for 'resB' resource to get 'Master' anywhere in cluster - this should succeed
+          crm_wait_for:
+            resource: 'resB'
+            state: 'Master'
+            timeout: '10'
+          register: state_master
+        - name: 03-03 list nodes where 'resB' is Slave - should be one node
+          debug:
+            var: state_slave
+        - name: 03-04 list nodes where 'resB' is Master - should be one node (other than one running 'Slave')
+          debug:
+            var: state_master
+        - name: disable resource 'resB'
+          pcs_resource:
+            name: 'resB'
+            resource_type: 'ocf:pacemaker:Stateful'
+            options: 'meta target-role=Stopped'
+        - name: 03-05 wait for 'resB' resource to get 'Stopped' in cluster - this should succeed
+          crm_wait_for:
+            resource: 'resB'
+            state: 'Stopped'
+            timeout: '10'
+      run_once: True
+    - name: tests 04 - resource is clone, node_list testing
+      block:
+        - name: create resource 'resC' as Clone
+          pcs_resource:
+            name: 'resC'
+            resource_type: 'ocf:pacemaker:Dummy'
+            options: 'clone'
+        - name: 04-01 wait for 'resB' resource to get present in cluster - this should succeed
+          crm_wait_for:
+            resource: 'resC'
+            state: 'present'
+          register: clone_present
+        - name: 04-02 show list of detected nodes in cluster
+          debug:
+            var: clone_present.cluster_nodes
+        - name: 04-03 wait for 'resC' resource to get 'Started' on ALL cluster nodes - this should succeed
+          crm_wait_for:
+            resource: 'resC'
+            state: 'Started'
+            node_list: "{{ clone_present.cluster_nodes }}"
+            timeout: '10'
+        - name: 04-04 wait for 'resC' resource to get 'Stopped' on ALL cluster nodes - this should fail
+          crm_wait_for:
+            resource: 'resC'
+            state: 'Stopped'
+            node_list: "{{ clone_present.cluster_nodes }}"
+            timeout: '10'
+          ignore_errors: true
+        - name: disable resource 'resC'
+          pcs_resource:
+            name: 'resC'
+            resource_type: 'ocf:pacemaker:Stateful'
+            options: 'clone meta target-role=Stopped'
+        - name: 04-05 wait for 'resC' resource to get 'Stopped' on ALL cluster nodes - this should succeed
+          crm_wait_for:
+            resource: 'resC'
+            state: 'Stopped'
+            node_list: "{{ clone_present.cluster_nodes }}"
+            timeout: '10'
+      run_once: True
+    - name: test 80 - test to show various error codes
+      block:
+        - name: make sure that 'res-random' doesn't exists in cluster
+          pcs_resource:
+            name: 'res-random'
+            state: 'absent'
+        - name: 80-01 wait for 'res-random' to get 'present' - should fail with "timeout"
+          crm_wait_for:
+            resource: 'res-random'
+            state: 'present'
+            timeout: '5'
+          ignore_errors: true
+        - name: 80-02 wait for 'res-random' to get 'Stopped' - should fail with "timeout"
+          crm_wait_for:
+            resource: 'res-random'
+            state: 'Stopped'
+            timeout: '5'
+          ignore_errors: true
+        - name: 80-03 wait for 'res-random' to get 'Started' on 'wrong-node' - should fail with "node_list contains a node that is not present in cluster."
+          crm_wait_for:
+            resource: 'res-random'
+            state: 'Started'
+            node_list: ['wrong-node']
+            timeout: '5'
+          ignore_errors: true
+      run_once: True
+    - name: cleanup 99 - remove resource created in cluster during testing
+      block:
+        - name: remove created resources
+          pcs_resource:
+            name: "{{ item }}"
+            state: 'absent'
+          loop:
+            - 'resA'
+            - 'resB'
+            - 'resC'
+      run_once: True
