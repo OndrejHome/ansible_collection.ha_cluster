@@ -1,0 +1,23 @@
+---
+- name: Enable locking_type=1
+  lineinfile:
+    dest: '/etc/lvm/lvm.conf'
+    regexp: '^\s*locking_type'
+    line: '        locking_type = 1'
+  notify:
+    - Rebuild initramfs
+
+- name: Include variables for pacemaker clusters on RHEL 6
+  include_vars: pacemaker.yml
+  when: ansible_distribution_major_version == "6"
+
+- name: Configure volume_list in /etc/lvm/lvm.conf (EL6/EL7)
+  lineinfile:
+    dest: '/etc/lvm/lvm.conf'
+    state: 'present'
+    regexp: '^\s+volume_list\s*='
+    line: "        volume_list = [ \"{{ [root_vg] | union(local_vg_list | default([])) | union(additional_volumes | default([])) | join('\",\"' | safe) }}\" ]"
+    insertafter: '^activation {'
+  notify:
+    - Rebuild initramfs
+  when: ansible_distribution_major_version in [ "6", "7" ]

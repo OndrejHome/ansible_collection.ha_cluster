@@ -1,0 +1,12 @@
+---
+# EL6, EL7
+- hosts: cluster
+  vars:
+    tagging_vgs:
+      - name: 'vg_shared'
+        pvs: '/dev/sdb'
+        lvs:
+          - name: 'lv_name5'
+            size: '200M'
+  roles:
+     - { role: 'ondrejhome.ha-cluster-lvm' }

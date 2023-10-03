@@ -1,0 +1,25 @@
+---
+- name: Create pacemaker activated VG
+  lvg:
+    vg: "{{ item.name }}"
+    pvs: "{{ item.pvs }}"
+    vg_options: -cn --addtag pacemaker --config activation{volume_list=['@pacemaker']}
+  notify:
+    - Deactivate VG
+    - Remove VG tag
+  register: vg_created
+  with_items:
+    - "{{ tagging_vgs }}"
+  run_once: true
+
+- name: Create one LV on pacemaker activated VG
+  lvol:
+    vg: "{{ item.0.name }}"
+    lv: "{{ item.1.name }}"
+    size: "{{ item.1.size }}"
+    opts: --addtag pacemaker --config "activation{volume_list=['@pacemaker']} global{locking_type=1}"
+  notify: Deactivate LV
+  with_subelements:
+    - "{{ tagging_vgs }}"
+    - lvs
+  run_once: true

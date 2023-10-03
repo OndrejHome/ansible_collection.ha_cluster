@@ -1,0 +1,65 @@
+---
+- name: Get list of active repositories
+  command: yum repolist
+  args:
+    warn: false
+  register: yum_repolist
+  changed_when: false
+  check_mode: false
+
+- name: (RHEL) Enable Resilient Storage (RS) repository
+  command: subscription-manager repos --enable="rhel-rs-for-rhel-{{ ansible_distribution_major_version }}-server-rpms"
+  when: >-
+    ['rhel-rs-for-rhel-',ansible_distribution_major_version,'-server-rpms'] | join not in yum_repolist.stdout
+    and enable_repos|bool
+    and ansible_distribution == 'RedHat'
+
+- name: (RHEL) Enable Resilient Storage (RS) EUS repository
+  command: subscription-manager repos --enable="rhel-rs-for-rhel-{{ ansible_distribution_major_version }}-server-eus-rpms"
+  when: >-
+    ['rhel-rs-for-rhel-',ansible_distribution_major_version,'-server-eus-rpms'] | join not in yum_repolist.stdout
+    and enable_eus_repos|bool
+    and ansible_distribution == 'RedHat'
+
+- name: Install packages for CLVM
+  yum:
+    name: 'lvm2-cluster'
+    state: 'installed'
+
+- name: Enable locking_type=3
+  lineinfile:
+    dest: '/etc/lvm/lvm.conf'
+    regexp: '^\s*locking_type'
+    line: '        locking_type = 3'
+  notify:
+    - Rebuild initramfs
+
+- name: Enable and start clvmd service (EL6)
+  service:
+    name: 'clvmd'
+    enabled: true
+    state: 'started'
+  when: ansible_distribution_major_version == "6"
+
+- name: Create controld pacemaker resource
+  pcs_resource:
+    name: 'controld'
+    resource_type: 'controld'
+    options: 'clone interleave=true ordered=true'
+  when: ansible_distribution_major_version == "7"
+  run_once: true
+
+- name: Create clvm pacemaker resource
+  pcs_resource:
+    name: 'clvm'
+    resource_type: 'clvm'
+    options: 'clone interleave=true ordered=true'
+  when: ansible_distribution_major_version == "7"
+  run_once: true
+
+- name: Ensure that controld resource starts before clvm resource
+  pcs_constraint_order:
+    resource1: 'controld-clone'
+    resource2: 'clvm-clone'
+  when: ansible_distribution_major_version == "7"
+  run_once: true

@@ -1,0 +1,12 @@
+---
+# EL8, EL9
+- hosts: cluster
+  vars:
+    lvmlockd_vgs:
+      - name: 'vg_lvmlockd'
+        pvs: '/dev/sdb'
+        lvs:
+          - name: 'lv_name6'
+            size: '200M'
+  roles:
+     - { role: 'ondrejhome.ha-cluster-lvm', HALVMtype: 'lvmlockd' }

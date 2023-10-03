@@ -1,0 +1,97 @@
+---
+- name: Check if proper HALVMtype is selected for EL6/EL7 platform
+  fail:
+    msg: "On EL6/EL7 you have to use 'tagging' or 'clmv' HALVMtype."
+  when:
+    - ansible_distribution_major_version in ["6","7"]
+    - not (HALVMtype in ['tagging','clvm'])
+
+- name: Check if proper HALVMtype is selected for EL8/EL9 platform
+  fail:
+    msg: "On EL8/EL9 you have to use 'systemid' or 'lvmlockd' HALVMtype."
+  when:
+    - ansible_distribution_major_version in ["8","9"]
+    - not (HALVMtype in ['systemid','lvmlockd'])
+
+- name: Disable use_lvmetad in /etc/lvm/lvm.conf if it exists
+  lineinfile:
+    dest: '/etc/lvm/lvm.conf'
+    regexp: '^\s+use_lvmetad'
+    line: '        use_lvmetad = 0'
+  notify:
+    - Rebuild initramfs
+  when: ansible_distribution_major_version in [ "6", "7" ]
+  # no use_lvmetad in RHEL8/9
+
+- name: Configure volume_list in /etc/lvm/lvm.conf (when local_vg_list is defined)
+  lineinfile:
+    dest: '/etc/lvm/lvm.conf'
+    state: 'present'
+    regexp: '^\s+volume_list\s*='
+    line: "        volume_list = [ \"{{ [root_vg] | union(local_vg_list | default([])) | union(additional_volumes | default([])) | join('\",\"' | safe) }}\" ]"
+    insertafter: '^activation {'
+  notify:
+    - Rebuild initramfs
+  when: local_vg_list is defined
+
+- name: Disable lvm2-lvmetad service
+  service:
+    name: 'lvm2-lvmetad'
+    enabled: false
+    state: 'stopped'
+  ignore_errors: true
+  # ignore failures as in the earlier version of EL6 the service didn't existed
+  when: ansible_distribution_major_version in [ "6", "7" ]
+  # no lvmetad in RHEL8
+
+- name: Setup HA-LVM tagging
+  include_tasks: ha-lvm-tagging.yml
+  when: HALVMtype == "tagging"
+
+- name: Setup HA-LVM CLVM
+  include_tasks: ha-lvm-clvm.yml
+  when: HALVMtype == "clvm"
+
+- name: Setup HA-LVM systemid
+  include_tasks: ha-lvm-systemid.yml
+  when: HALVMtype == "systemid"
+
+- name: Setup HA-LVM lvmlockd
+  include_tasks: ha-lvm-lockd.yml
+  when: HALVMtype == "lvmlockd"
+
+- name: Configure tagging type VGs/LVs
+  include_tasks: create_tagging_vgs_lvs.yml
+  when: tagging_vgs is defined
+
+- name: Configure clvm type VGs/LVs
+  include_tasks: create_clvm_vgs_lvs.yml
+  when: clvm_vgs is defined and HALVMtype == "clvm"
+
+- name: Check if 'use_devicesfile' is enabled on EL8/EL9 platform
+  command: /usr/sbin/lvmdevices --check
+  register: use_devicesfile_check
+  ignore_errors: true
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_distribution_major_version in ["8","9"]
+    - "(systemid_vgs is defined) or (lvmlockd_vgs is defined)"
+
+- name: Get list of defined devices from lvmdevices
+  command: lvmdevices
+  register: lvmdevices_list
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_distribution_major_version in ["8","9"]
+    - "(systemid_vgs is defined) or (lvmlockd_vgs is defined)"
+    - use_devicesfile_check is succeeded
+
+- name: Configure systemid type VGs/LVs
+  include_tasks: create_systemid_vgs_lvs.yml
+  when: systemid_vgs is defined and HALVMtype == "systemid"
+
+- name: Configure lvmlockd type VGs/LVs
+  include_tasks: create_lvmlockd_vgs_lvs.yml
+  when: lvmlockd_vgs is defined and HALVMtype == "lvmlockd"

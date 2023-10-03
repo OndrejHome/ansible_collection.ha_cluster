@@ -1,0 +1,26 @@
+---
+# EL6, EL7
+- hosts: cluster
+  vars:
+    # enable_repos: true      # RHEL-only
+    # enable_eus_repos: false # RHEL-only
+    local_vg_list:
+      - 'vg_clvm'
+    clvm_vgs:
+      - name: 'vg_clvm'
+        pvs: '/dev/sdb'
+        lvs:
+          - name: 'lv_name3'
+            size: '200M'
+          - name: 'lv_name4'
+            size: '100M'
+    tagging_vgs:
+      - name: 'vg_shared'
+        pvs: '/dev/sdc'
+        lvs:
+          - name: 'lv_name5'
+            size: '200M'
+          - name: 'lv_name6'
+            size: '100M'
+  roles:
+     - { role: 'ondrejhome.ha-cluster-lvm', HALVMtype: 'clvm' }

@@ -1,0 +1,61 @@
+---
+- name: Get list of active repositories
+  command: yum repolist
+  args:
+    warn: false
+  register: yum_repolist
+  changed_when: false
+  check_mode: false
+
+- name: (RHEL) Enable Resilient Storage (RS) repository
+  command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-resilientstorage-rpms"
+  when: >-
+    ['rhel-',ansible_distribution_major_version,'-for-x86_64-resilientstorage-rpms'] | join not in yum_repolist.stdout
+    and enable_repos|bool
+    and ansible_distribution == 'RedHat'
+
+- name: (RHEL) Enable Resilient Storage (RS) EUS repository
+  command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-resilientstorage-eus-rpms"
+  when: >-
+    ['rhel-',ansible_distribution_major_version,'-for-x86_64-resilientstorage-eus-rpms'] | join not in yum_repolist.stdout
+    and enable_eus_repos|bool
+    and ansible_distribution == 'RedHat'
+
+- name: Install packages for lvmlockd
+  yum:
+    name: ['lvm2-lockd', 'dlm']
+    state: 'installed'
+
+- name: Set use_lvmlockd = 1
+  lineinfile:
+    dest: '/etc/lvm/lvm.conf'
+    regexp: '^\s*use_lvmlockd'
+    line: '        use_lvmlockd = 1'
+    insertafter: 'global {'
+  notify:
+    - Rebuild initramfs
+
+# FIXME: here is creation of old-style 2 resources with constraints,
+# new documentation (RHEL 8/9) is using cloned interleaved group instead
+- name: Create controld pacemaker resource
+  pcs_resource:
+    name: 'controld'
+    resource_type: 'ocf:pacemaker:controld'
+    options: 'op monitor interval=30s on-fail=fence clone interleave=true'
+  when: ansible_distribution_major_version in ["8","9"]
+  run_once: true
+
+- name: Create lvmlockd pacemaker resource
+  pcs_resource:
+    name: 'lvmlockd'
+    resource_type: 'ocf:heartbeat:lvmlockd'
+    options: 'op monitor interval=30s on-fail=fence clone interleave=true'
+  when: ansible_distribution_major_version in ["8","9"]
+  run_once: true
+
+- name: Ensure that controld resource starts before clvm resource
+  pcs_constraint_order:
+    resource1: 'controld-clone'
+    resource2: 'lvmlockd-clone'
+  when: ansible_distribution_major_version in ["8","9"]
+  run_once: true

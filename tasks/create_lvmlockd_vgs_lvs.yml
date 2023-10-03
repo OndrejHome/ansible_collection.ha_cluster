@@ -1,0 +1,32 @@
+---
+- name: Create clustered VG (lvmlockd)
+  lvg:
+    vg: "{{ item.name }}"
+    pvs: "{{ item.pvs }}"
+    vg_options: '--shared'
+  with_items:
+    - "{{ lvmlockd_vgs }}"
+  run_once: true
+
+- name: Create LV on clustered VG (lvmlockd)
+  lvol:
+    vg: "{{ item.0.name }}"
+    lv: "{{ item.1.name }}"
+    size: "{{ item.1.size }}"
+  with_subelements:
+    - "{{ lvmlockd_vgs }}"
+    - lvs
+  run_once: true
+
+- name: EL8/EL9 - Make shared VG visible on all nodes when 'use_devicesfile' is enabled
+  command: lvmdevices --adddev "{{ item.pvs }}"
+  with_items:
+    - "{{ lvmlockd_vgs }}"
+  when:
+    - ansible_distribution_major_version in ["8","9"]
+    - use_devicesfile_check is succeeded
+    - "['Device ',item.pvs,' '] | join not in lvmdevices_list.stdout"
+# typical output from 'lvmdevices looks like this'
+# ...
+#   Device /dev/sdb IDTYPE=sys_wwid IDNAME=naa.6001405fca4c3943fe54eaf96b16a195 DEVNAME=/dev/sdb PVID=YOEZbPCU1cvCOhT1OTlkUGKBsDUV0nk6
+# ...

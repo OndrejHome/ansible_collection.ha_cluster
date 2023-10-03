@@ -1,0 +1,15 @@
+# Detect if the root file system is on LVM and if so detect which VG it uses
+# LOGIC:
+# for mount in ansible_mounts - iterate through all mountpoints
+#   if mount['mount'] == '/' - once the root filesystem mountpoint is found
+#     for i in ansible_lvm['lvs'] - iterate through all LVs in 'lvs'
+#       set a = ansible_lvm['lvs'][i]['vg']|replace('-','--')
+#       set b = i|replace('-','--')
+#       set c = [ '/dev/mapper/', a, '-', b ]|join
+#       if mount['device'] == c - if the output from 'lvs' constructed int path for /dev/mapper matches the root filesystem
+#         ansible_lvm['lvs'][i]['vg'] - print out the VG name of root file system
+#
+# EXPECTED OUTPUTS:
+#  - <empty> - on systems without LVM or with LVM that is not used for root file system
+#  - VG_name - on systems where root file system is on LV from VG_name
+root_vg: "{% for mount in ansible_mounts %}{% if mount['mount'] == '/' %}{% for i in ansible_lvm['lvs'] %}{% set a = ansible_lvm['lvs'][i]['vg'] | replace('-', '--') %}{% set b = i | replace('-', '--') %}{% set c = ['/dev/mapper/', a, '-', b] | join %}{% if mount['device'] == c %}{{ ansible_lvm['lvs'][i]['vg'] }}{% endif %}{% endfor %}{% endif %}{% endfor %}"

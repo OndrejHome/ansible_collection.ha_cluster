@@ -1,0 +1,21 @@
+# type of HA-LVM, possible options are:
+# on EL6 and EL7:
+# -'tagging' (default) or 'clvm'
+# on EL 8 and EL9:
+# - 'systemid' or 'lvmlockd'
+HALVMtype: "tagging"
+
+# List of localy activated VGs
+# This role will automatically detect the VG of root filesystem when used.
+#
+# local_vg_list: ['some_vg1', 'some_vg2' ]
+# local_vg_list:
+# - some_vg1
+# - some_vg2
+# when specified in inventory, then
+# 192.168.xx.xx local_vg_list="['some_vg1','some_vg2']"
+
+# (RHEL only) enable repositories(channels) containing the packages needed.
+# by default only Resilient Storage is enabled when CLVMD should be used
+enable_repos: true
+enable_eus_repos: false
