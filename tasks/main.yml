@@ -1,0 +1,262 @@
+---
+- name: Generate random ID for this cluster deployment
+  set_fact:
+    rand_id: "{{ 1024 | random }}"
+  run_once: true
+  changed_when: false
+  check_mode: false
+  # This ID is used for ansible group names grouping machines from this run of role.
+  # If this role is run multiple times in single playbook with different hosts this
+  # ID will distinguish these different hosts
+  # FIXME: this is workaround for inability to "remove things from groups"
+
+- name: Add a group to the inventory for remote nodes
+  changed_when: false
+  group_by:
+    key: "cluster{{ rand_id }}_node_is_remote_{{ cluster_node_is_remote | bool }}"
+
+- name: Check if cluster consist of at least 2 nodes
+  fail:
+    msg: 'Cluster must have at least 2 full members'
+  when: groups['cluster'+rand_id+'_node_is_remote_False']|default([])|count() < 2
+  run_once: true
+
+- name: Check if cluster_user_pass is not default
+  assert:
+    that:
+      - cluster_user_pass != 'testtest'
+    fail_msg: 'It is strongly recommended to define a password'
+  ignore_errors: true
+  run_once: true
+
+- name: Include distribution version specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_distribution_file_variety | lower }}{{ ansible_distribution_major_version }}.yml"
+
+- name: Include distribution specific repository configuration
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution | lower }}_repos.yml"
+      skip: true
+
+- name: Install packages from local media
+  include_tasks: install_local_media.yml
+  when: use_local_media|bool
+
+- name: Install packages from system defined repositories
+  include_tasks: install_normal.yml
+  when: not use_local_media|bool
+
+- name: Include distribution specific tasks
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution | lower }}_tasks.yml"
+      skip: true
+
+- name: Detect the primary (ring0) cluster IP on all nodes
+  set_fact:
+    ring0_ip: "{{ item }}"
+  loop: "{{ ring0_ip_ordered_detection_list }}"
+  when: ring0_ip|default('')|count() == 0
+  # NOTE: first detected IP from given list of possibilities is being used for given node
+
+- name: Verify that we were able to detect primary (ring0) cluster IP on all nodes
+  fail:
+    msg: "Unable to determine ring0 IP address on node {{ inventory_hostname }}. Try setting 'cluster_net_iface' for this node to give it hint where to look for cluster ip."
+  when: ring0_ip|count() == 0
+
+# WARNING: the hostname is resolved from /etc/hosts file! If you change hostname
+# of machine through /etc/hosts the ansible will pick it up and use it!
+- name: Add hosts to /etc/hosts
+  lineinfile:
+    dest: '/etc/hosts'
+    regexp: "{{ hostvars[item]['ring0_ip'] }} "
+    line: >
+      {{ hostvars[item]['ring0_ip'] }}
+      {{ hostvars[item][cluster_hostname_fact] }}
+    mode: '0644'
+  with_items: "{{ play_hosts }}"
+  when:
+    - cluster_etc_hosts | bool
+
+- name: Create cluster system group
+  group:
+    name: "{{ cluster_group }}"
+    state: 'present'
+
+- name: Create cluster system user
+  user:
+    name: "{{ cluster_user }}"
+    state: 'present'
+    password: >-
+      {{ cluster_user_pass |
+      password_hash('sha512', ansible_hostname | replace('-', 'x') |
+      truncate(16, True, '', 0)) }}
+    groups: "{{ cluster_group }}"
+    comment: 'HA Cluster Administrator'
+
+- name: Enable/Disable PCSD web GUI
+  lineinfile:
+    dest: "{{ pcsd_configuration_file }}"
+    regexp: 'PCSD_DISABLE_GUI=.*'
+    line: "PCSD_DISABLE_GUI={{ enable_pcsd_gui | bool | ternary('false', 'true') }}"
+    mode: '0644'
+  when: enable_pcsd_gui != 'nochange'
+
+- name: Enable and start PCSD service
+  service:
+    name: 'pcsd'
+    enabled: true
+    state: 'started'
+
+- name: (Debian 11) Enable and start PCSD-ruby service
+  service:
+    name: 'pcsd-ruby'
+    enabled: true
+    state: 'started'
+  when:
+    - ansible_distribution|lower == 'debian'
+    - ansible_distribution_major_version == '11'
+
+- name: Setup firewall
+  include_tasks: "firewall.yml"
+  when: cluster_firewall|bool
+
+- name: Authorize cluster nodes
+  pcs_auth:
+    node_name: "{{ hostvars[item][cluster_hostname_fact] }}"
+    username: "{{ cluster_user }}"
+    password: "{{ cluster_user_pass }}"
+  with_items: "{{ play_hosts }}"
+  when: not cluster_node_is_remote | bool
+
+- name: Set corosync redundant ring node ip if requested (from rrp_interface)
+  set_fact:
+    rrp_ip: "{{ hostvars[inventory_hostname]['ansible_' + rrp_interface].ipv4.address }}"
+  when:
+    - rrp_ip is not defined
+    - rrp_interface is defined
+    - rrp_interface and 'ansible_'+rrp_interface in hostvars[inventory_hostname]
+
+- name: Validate redundant ring ip
+  fail:
+    msg: >-
+      invalid redundant ip {{ rrp_ip }} for {{ ansible_hostname }}:
+      must be different than primary ip {{ ring0_ip }}
+  when:
+    - rrp_ip is defined
+    - rrp_ip == ring0_ip
+  with_items: "{{ play_hosts }}"
+  run_once: true
+  delegate_to: 'localhost'
+  any_errors_fatal: true
+
+- name: Setup cluster
+  pcs_cluster:
+    node_list: >-
+      {% for item in groups['cluster' + rand_id + '_node_is_remote_False'] %}
+      {{ hostvars[item][cluster_hostname_fact] }}{% if hostvars[item].rrp_ip is defined %},{{ hostvars[item].rrp_ip }}{% endif %}
+      {% endfor %}
+    cluster_name: "{{ cluster_name }}"
+    transport: "{{ cluster_transport }}"
+    allowed_node_changes: "{% if allow_cluster_expansion | bool %}add{% else %}none{% endif %}"
+  run_once: true
+
+- name: Start cluster services on all nodes
+  service:
+    name: "{{ item }}"
+    state: 'started'
+  with_items:
+    - pacemaker
+    - corosync
+  when: not cluster_node_is_remote | bool
+
+- name: Enable cluster services on boot
+  service:
+    name: "{{ item }}"
+    enabled: true
+  with_items:
+    - pacemaker
+    - corosync
+  when:
+    - cluster_enable_service | bool
+    - not cluster_node_is_remote | bool
+
+- name: Block for adding remote nodes
+  vars:
+    delegate_host: "{{ hostvars[groups['cluster' + rand_id + '_node_is_remote_False'][0]].inventory_hostname }}"
+    # NOTE: Without this, the host's ansible_host variable will not be
+    # respected when using delegate_to.
+    ansible_host: "{{ hostvars[delegate_host].ansible_host | default(delegate_host) }}"
+  when:
+    - groups['cluster'+rand_id+'_node_is_remote_False'] is defined
+    - groups['cluster'+rand_id+'_node_is_remote_True']|default([])|count() > 0
+  delegate_to: "{{ delegate_host }}"
+  block:
+    - name: Get pcs status
+      command: pcs status
+      run_once: true
+      changed_when: false
+      check_mode: false
+      register: pcs_status
+
+    - name: Add remote node
+      vars:
+        cluster_hostname: "{{ hostvars[inventory_hostname][cluster_hostname_fact] }}"
+      command: pcs cluster node add-remote {{ cluster_hostname }}
+      when:
+        - cluster_node_is_remote | bool
+        - (pcs_status.stdout | regex_search('\\b' ~ cluster_hostname ~ '\\s+\\(ocf::pacemaker:remote\\)') or '') | length == 0
+
+### fencing setup
+- name: Setup automatic fence_xvm
+  include_tasks: fence_xvm.yml
+  when: cluster_configure_fence_xvm is defined and cluster_configure_fence_xvm|bool
+
+- name: Setup fence_vmware_soap
+  include_tasks: fence_vmware_soap.yml
+  when: cluster_configure_fence_vmware_soap is defined and cluster_configure_fence_vmware_soap|bool
+
+- name: Setup fence_vmware_rest
+  include_tasks: fence_vmware_rest.yml
+  when: cluster_configure_fence_vmware_rest is defined and cluster_configure_fence_vmware_rest|bool
+
+- name: Setup fence_kdump
+  include_tasks: fence_kdump.yml
+  when: cluster_configure_fence_kdump is defined and cluster_configure_fence_kdump|bool
+
+- name: Setup fence_aws
+  include_tasks: fence_aws.yml
+  when: cluster_configure_fence_aws is defined and cluster_configure_fence_aws|bool
+
+- name: Setup custom fence devices
+  include_tasks: fence_custom.yml
+
+### Cluster configuration setup
+- name: Configure cluster properties
+  include_tasks: cluster_property.yml
+  when: cluster_property is defined
+
+- name: Configure cluster resource defaults
+  include_tasks: cluster_resource_defaults.yml
+  when: cluster_resource_defaults is defined
+
+- name: Configure cluster resources
+  include_tasks: cluster_resource.yml
+  when: cluster_resource is defined
+
+- name: Configure cluster order constraints
+  include_tasks: cluster_constraint_order.yml
+  when: cluster_constraint_order is defined
+
+- name: Configure cluster colocation constraints
+  include_tasks: cluster_constraint_colocation.yml
+  when: cluster_constraint_colocation is defined
+
+- name: Configure cluster location constraints
+  include_tasks: cluster_constraint_location.yml
+  when: cluster_constraint_location is defined

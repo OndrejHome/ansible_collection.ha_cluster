@@ -1,0 +1,67 @@
+---
+- name: Construct list of packages for installation
+  run_once: true
+  delegate_to: localhost
+  block:
+    - name: "Packages: Add pacemaker/pacemaker-remote packages"
+      set_fact:
+        packages_for_installation: "{{ cluster_node_is_remote | bool | ternary(pacemaker_remote_packages, pacemaker_packages) }}"
+
+    - name: "Packages: Add libselinux-python package to work with SELinux setting"
+      set_fact:
+        packages_for_installation: "{{ packages_for_installation + ['libselinux-python'] }}"
+      when:
+        - not (ansible_distribution in ['RedHat','CentOS','AlmaLinux','Rocky'] and ansible_distribution_major_version == '8')
+        - not (ansible_distribution in ['RedHat','AlmaLinux','Rocky'] and ansible_distribution_major_version == '9')
+        - not (ansible_distribution == 'Fedora' and ansible_distribution_major_version >= '31')
+        - not (ansible_distribution == 'Debian')
+
+    - name: "Packages: Add pcs-modules-2 Debian dependencies"
+      set_fact:
+        packages_for_installation: "{{ packages_for_installation + ['python3-distutils'] }}"
+      when:
+        - ansible_distribution == 'Debian'
+        - ansible_distribution_major_version in ['10','11','12']
+
+    - name: "Packages: Add firewall packages"
+      set_fact:
+        packages_for_installation: "{{ packages_for_installation + firewall_packages }}"
+      when: cluster_firewall|bool
+
+    - name: "Packages: Add fence_xvm packages"
+      set_fact:
+        packages_for_installation: "{{ packages_for_installation + fence_xvm_packages }}"
+      when: cluster_configure_fence_xvm|bool
+
+    - name: "Packages: Add fence_kdump packages"
+      set_fact:
+        packages_for_installation: "{{ packages_for_installation + fence_kdump_packages }}"
+      when: cluster_configure_fence_kdump|bool
+
+    - name: "Packages: Add fence_vmware_rest packages"
+      set_fact:
+        packages_for_installation: "{{ packages_for_installation + fence_vmware_rest_packages }}"
+      when: cluster_configure_fence_vmware_rest is defined and cluster_configure_fence_vmware_rest|bool
+
+    - name: "Packages: Add fence_vmware_soap packages"
+      set_fact:
+        packages_for_installation: "{{ packages_for_installation + fence_vmware_soap_packages }}"
+      when: cluster_configure_fence_vmware_soap is defined and cluster_configure_fence_vmware_soap|bool
+
+    - name: "Packages: Add fence_aws packages"
+      set_fact:
+        packages_for_installation: "{{ packages_for_installation + fence_aws_packages }}"
+      when: cluster_configure_fence_aws|bool
+
+- name: Install packages (YUM)
+  yum:
+    name: "{{ packages_for_installation }}"
+    state: 'installed'
+  when: ansible_distribution != 'Debian'
+
+- name: Install packages (APT)
+  apt:
+    name: "{{ packages_for_installation }}"
+    state: 'present'
+    cache_valid_time: 3600
+  when: ansible_distribution == 'Debian'

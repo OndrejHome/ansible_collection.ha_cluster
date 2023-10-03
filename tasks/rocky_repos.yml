@@ -1,0 +1,34 @@
+---
+- name: Get list of active repositories
+  command: yum repolist
+  args:
+    warn: "{{ (ansible_version.full is version('2.14', '<')) | ternary(false, omit) }}"
+  register: yum_repolist
+  changed_when: false
+  check_mode: false
+
+- name: Enable highavailability repository (Rocky 8)
+  ini_file:
+    dest: '/etc/yum.repos.d/Rocky-HighAvailability.repo'
+    section: 'ha'
+    option: 'enabled'
+    value: '1'
+    create: 'no'
+    mode: '0644'
+  when: >-
+    'HighAvailability' not in yum_repolist.stdout
+    and enable_repos | bool
+    and ansible_distribution_major_version in ['8']
+
+- name: Enable highavailability repository (Rocky 9)
+  ini_file:
+    dest: '/etc/yum.repos.d/rocky-addons.repo'
+    section: 'highavailability'
+    option: 'enabled'
+    value: '1'
+    create: 'no'
+    mode: '0644'
+  when: >-
+    'highavailability' not in yum_repolist.stdout
+    and enable_repos | bool
+    and ansible_distribution_major_version in ['9']
