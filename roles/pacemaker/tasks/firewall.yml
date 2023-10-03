@@ -11,7 +11,7 @@
         state: 'started'
 
     - name: Enable 'high-availability' firewalld service
-      firewalld:
+      ansible.posix.firewalld:
         service: 'high-availability'
         permanent: true
         state: 'enabled'

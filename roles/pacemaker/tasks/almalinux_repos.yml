@@ -8,7 +8,7 @@
   check_mode: false
 
 - name: Enable highavailability repository (AlmaLinux 8.3+)
-  ini_file:
+  community.general.ini_file:
     dest: '/etc/yum.repos.d/almalinux-ha.repo'
     section: 'ha'
     option: 'enabled'
@@ -21,7 +21,7 @@
     and ansible_distribution_major_version in ['8']
 
 - name: Enable highavailability repository (AlmaLinux 9)
-  ini_file:
+  community.general.ini_file:
     dest: '/etc/yum.repos.d/almalinux-highavailability.repo'
     section: 'highavailability'
     option: 'enabled'

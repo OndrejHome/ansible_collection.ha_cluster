@@ -1,6 +1,6 @@
 ---
 - name: Create pacemaker activated VG
-  lvg:
+  community.general.lvg:
     vg: "{{ item.name }}"
     pvs: "{{ item.pvs }}"
     vg_options: -cn --addtag pacemaker --config activation{volume_list=['@pacemaker']}
@@ -13,7 +13,7 @@
   run_once: true
 
 - name: Create one LV on pacemaker activated VG
-  lvol:
+  community.general.lvol:
     vg: "{{ item.0.name }}"
     lv: "{{ item.1.name }}"
     size: "{{ item.1.size }}"

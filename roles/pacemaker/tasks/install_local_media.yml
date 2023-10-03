@@ -1,6 +1,6 @@
 ---
 - name: Mount cdrom to /media/CentOS
-  mount:
+  ansible.posix.mount:
     name: '/media/CentOS'
     src: '/dev/cdrom'
     state: 'mounted'

@@ -6,7 +6,7 @@
     - ansible_distribution_version is version('8.5', '>=')
 
 - name: Create systemid VG
-  lvg:
+  community.general.lvg:
     vg: "{{ item.name }}"
     pvs: "{{ item.pvs }}"
     vg_options: "{{ extra_vg_options | default(omit) }}"
@@ -15,7 +15,7 @@
   run_once: true
 
 - name: Create LVs on systemid VG
-  lvol:
+  community.general.lvol:
     vg: "{{ item.0.name }}"
     lv: "{{ item.1.name }}"
     size: "{{ item.1.size }}"
