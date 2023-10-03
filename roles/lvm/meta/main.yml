@@ -16,5 +16,4 @@ galaxy_info:
     - pacemaker
     - halvm
     - lvm
-dependencies:
-  - {role: ondrejhome.pcs-modules-2}
+dependencies: []
