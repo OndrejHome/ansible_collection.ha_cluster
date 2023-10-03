@@ -1,0 +1,145 @@
+
+PLAY [f33] ******************************************************************************************************************
+
+TASK [Gathering Facts] ******************************************************************************************************
+ok: [192.168.2.73]
+ok: [192.168.2.72]
+
+TASK [get crm_mon version] **************************************************************************************************
+ok: [192.168.2.72]
+
+TASK [print crm_mon version] ************************************************************************************************
+ok: [192.168.2.72] => {
+    "crm_mon.stdout": "Pacemaker 2.0.5-0.7.rc3.fc33\nWritten by Andrew Beekhof"
+}
+
+TASK [make sure that resource 'resA' doesn't exists] ************************************************************************
+ok: [192.168.2.72]
+
+TASK [01-01 wait for 'resA' resource to get defined in cluster config - this should fail] ***********************************
+fatal: [192.168.2.72]: FAILED! => {"changed": false, "cluster_nodes": ["fastvm-fedora33-73", "fastvm-fedora33-72"], "elapsed": 8, "msg": "timeout", "rsc_active_node_set": []}
+...ignoring
+
+TASK [01-02 wait for 'resA' resource to get removed from cluster configuration - this should succeed] ***********************
+ok: [192.168.2.72]
+
+TASK [create resource 'resA'] ***********************************************************************************************
+changed: [192.168.2.72]
+
+TASK [01-03 wait for 'resA' resource to get defined in cluster config - this should succeed] ********************************
+ok: [192.168.2.72]
+
+TASK [create resource 'resA'] ***********************************************************************************************
+ok: [192.168.2.72]
+
+TASK [02-01 wait for 'resA' resource to get 'Started' anywhere in cluster - this should succeed] ****************************
+ok: [192.168.2.72]
+
+TASK [disable resource 'resA'] **********************************************************************************************
+changed: [192.168.2.72]
+
+TASK [02-02 wait for 'resA' resource to get 'Stopped' in cluster - this should succeed] *************************************
+ok: [192.168.2.72]
+
+TASK [create resource 'resB' (1/2) - old 'master' keyword] ******************************************************************
+fatal: [192.168.2.72]: FAILED! => {"changed": false, "error": "Error: missing value of 'master' option\nHint: Master/Slave resources have been renamed to promotable clones, please use the 'promotable' keyword instead of 'master'. See 'man pcs' -> Changes in pcs-0.10.\n", "msg": "Failed to create resource using command 'pcs  resource create resB ocf:pacemaker:Stateful master'", "output": ""}
+...ignoring
+
+TASK [create resource 'resB' (2/2) - new 'promotable' keyword] **************************************************************
+changed: [192.168.2.72]
+
+TASK [03-01 wait for 'resB' resource to get 'Slave' anywhere in cluster - this should succeed] ******************************
+ok: [192.168.2.72]
+
+TASK [03-02 wait for 'resB' resource to get 'Master' anywhere in cluster - this should succeed] *****************************
+ok: [192.168.2.72]
+
+TASK [03-03 list nodes where 'resB' is Slave - should be one node] **********************************************************
+ok: [192.168.2.72] => {
+    "state_slave": {
+        "changed": false, 
+        "cluster_nodes": [
+            "fastvm-fedora33-72", 
+            "fastvm-fedora33-73"
+        ], 
+        "elapsed": 0, 
+        "failed": false, 
+        "rsc_active_node_set": [
+            "fastvm-fedora33-72"
+        ]
+    }
+}
+
+TASK [03-04 list nodes where 'resB' is Master - should be one node (other than one running 'Slave')] ************************
+ok: [192.168.2.72] => {
+    "state_master": {
+        "changed": false, 
+        "cluster_nodes": [
+            "fastvm-fedora33-72", 
+            "fastvm-fedora33-73"
+        ], 
+        "elapsed": 0, 
+        "failed": false, 
+        "rsc_active_node_set": [
+            "fastvm-fedora33-73"
+        ]
+    }
+}
+
+TASK [disable resource 'resB'] **********************************************************************************************
+changed: [192.168.2.72]
+
+TASK [03-05 wait for 'resB' resource to get 'Stopped' in cluster - this should succeed] *************************************
+ok: [192.168.2.72]
+
+TASK [create resource 'resC' as Clone] **************************************************************************************
+changed: [192.168.2.72]
+
+TASK [04-01 wait for 'resB' resource to get present in cluster - this should succeed] ***************************************
+ok: [192.168.2.72]
+
+TASK [04-02 show list of detected nodes in cluster] *************************************************************************
+ok: [192.168.2.72] => {
+    "clone_present.cluster_nodes": [
+        "fastvm-fedora33-73", 
+        "fastvm-fedora33-72"
+    ]
+}
+
+TASK [04-03 wait for 'resC' resource to get 'Started' on ALL cluster nodes - this should succeed] ***************************
+ok: [192.168.2.72]
+
+TASK [04-04 wait for 'resC' resource to get 'Stopped' on ALL cluster nodes - this should fail] ******************************
+fatal: [192.168.2.72]: FAILED! => {"changed": false, "cluster_nodes": ["fastvm-fedora33-72", "fastvm-fedora33-73"], "elapsed": 8, "msg": "timeout", "rsc_active_node_set": ["fastvm-fedora33-72", "fastvm-fedora33-73"], "rsc_inactive_node_set": []}
+...ignoring
+
+TASK [disable resource 'resC'] **********************************************************************************************
+changed: [192.168.2.72]
+
+TASK [04-05 wait for 'resC' resource to get 'Stopped' on ALL cluster nodes - this should succeed] ***************************
+ok: [192.168.2.72]
+
+TASK [make sure that 'res-random' doesn't exists in cluster] ****************************************************************
+ok: [192.168.2.72]
+
+TASK [80-01 wait for 'res-random' to get 'present' - should fail with "timeout"] ********************************************
+fatal: [192.168.2.72]: FAILED! => {"changed": false, "cluster_nodes": ["fastvm-fedora33-72", "fastvm-fedora33-73"], "elapsed": 4, "msg": "timeout", "rsc_active_node_set": []}
+...ignoring
+
+TASK [80-02 wait for 'res-random' to get 'Stopped' - should fail with "timeout"] ********************************************
+fatal: [192.168.2.72]: FAILED! => {"changed": false, "cluster_nodes": ["fastvm-fedora33-72", "fastvm-fedora33-73"], "elapsed": 4, "msg": "timeout", "rsc_active_node_set": []}
+...ignoring
+
+TASK [80-03 wait for 'res-random' to get 'Started' on 'wrong-node' - should fail with "node_list contains a node that is not present in cluster."] ***
+fatal: [192.168.2.72]: FAILED! => {"changed": false, "cluster_nodes": ["fastvm-fedora33-72", "fastvm-fedora33-73"], "msg": "node_list contain a node that is not present in cluster.", "node_list": ["wrong-node"]}
+...ignoring
+
+TASK [remove created resources] *********************************************************************************************
+changed: [192.168.2.72] => (item=resA)
+changed: [192.168.2.72] => (item=resB)
+changed: [192.168.2.72] => (item=resC)
+
+PLAY RECAP ******************************************************************************************************************
+192.168.2.72               : ok=32   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=6   
+192.168.2.73               : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

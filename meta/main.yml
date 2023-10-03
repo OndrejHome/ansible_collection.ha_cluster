@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: crm_wait_for
+  author: Ondrej Faměra
+  description: Module used for waiting on various resource states in pacemaker cluster.
+  company: Ondrej Faměra
+  license: GPLv3
+  min_ansible_version: 2.9
+  platforms:
+  - name: EL
+    versions:
+    - 7
+    - 8
+  - name: Fedora
+    versions:
+    - 31
+    - 32
+    - 33
+  galaxy_tags:
+  - clustering
+  - pacemaker
+dependencies: []
