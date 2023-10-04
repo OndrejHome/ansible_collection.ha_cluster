@@ -1,6 +1,6 @@
 ---
 - name: Get list of active repositories
-  command: yum repolist
+  ansible.builtin.command: yum repolist
   args:
     warn: false
   register: yum_repolist
@@ -8,26 +8,26 @@
   check_mode: false
 
 - name: (RHEL) Enable Resilient Storage (RS) repository
-  command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-resilientstorage-rpms"
+  ansible.builtin.command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-resilientstorage-rpms"
   when: >-
     ['rhel-',ansible_distribution_major_version,'-for-x86_64-resilientstorage-rpms'] | join not in yum_repolist.stdout
     and enable_repos|bool
     and ansible_distribution == 'RedHat'
 
 - name: (RHEL) Enable Resilient Storage (RS) EUS repository
-  command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-resilientstorage-eus-rpms"
+  ansible.builtin.command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-resilientstorage-eus-rpms"
   when: >-
     ['rhel-',ansible_distribution_major_version,'-for-x86_64-resilientstorage-eus-rpms'] | join not in yum_repolist.stdout
     and enable_eus_repos|bool
     and ansible_distribution == 'RedHat'
 
 - name: Install packages for lvmlockd
-  yum:
+  ansible.builtin.yum:
     name: ['lvm2-lockd', 'dlm']
     state: 'installed'
 
 - name: Set use_lvmlockd = 1
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: '/etc/lvm/lvm.conf'
     regexp: '^\s*use_lvmlockd'
     line: '        use_lvmlockd = 1'

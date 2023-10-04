@@ -8,14 +8,14 @@
     opts: 'ro'
 
 - name: Install libselinux-python to work with SELinux setting
-  yum:
+  ansible.builtin.yum:
     name: 'libselinux-python'
     state: 'installed'
     disablerepo: '*'
     enablerepo: "c{{ ansible_distribution_major_version }}-media"
 
 - name: Install firewall packages
-  yum:
+  ansible.builtin.yum:
     name: '{{ firewall_packages }}'
     state: 'installed'
     disablerepo: '*'
@@ -23,14 +23,14 @@
   when: cluster_firewall|bool
 
 - name: Install Pacemaker cluster packages to all nodes
-  yum:
+  ansible.builtin.yum:
     name: "{{ pacemaker_packages }}"
     state: 'installed'
     disablerepo: '*'
     enablerepo: "c{{ ansible_distribution_major_version }}-media"
 
 - name: Install package(s) for fence_xvm
-  yum:
+  ansible.builtin.yum:
     name: "{{ fence_xvm_packages }}"
     state: 'installed'
     disablerepo: '*'
@@ -38,7 +38,7 @@
   when: cluster_configure_fence_xvm|bool
 
 - name: Install package(s) for fence_kdump
-  yum:
+  ansible.builtin.yum:
     name: "{{ fence_kdump_packages }}"
     state: 'installed'
     disablerepo: '*'

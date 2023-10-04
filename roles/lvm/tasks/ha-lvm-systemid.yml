@@ -1,6 +1,6 @@
 ---
 - name: Set system_id_source = "uname"
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: '/etc/lvm/lvm.conf'
     regexp: '^\s*system_id_source'
     line: '       system_id_source = "uname"'
@@ -9,7 +9,7 @@
     - Rebuild initramfs
 
 - name: Configure auto_activation_volume_list in /etc/lvm/lvm.conf (EL 8.0-8.4)
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: '/etc/lvm/lvm.conf'
     state: 'present'
     regexp: '^\s+auto_activation_volume_list\s*='
@@ -20,18 +20,18 @@
   when: ansible_distribution_version in [ "8.0","8.1","8.2","8.3","8.4" ]
 
 - name: Get 'uname -n'
-  command: uname -n
+  ansible.builtin.command: uname -n
   register: lvm_uname
   changed_when: false
   check_mode: false
 
 - name: Get 'lvm systemid'
-  command: lvm systemid
+  ansible.builtin.command: lvm systemid
   register: lvm_systemid
   changed_when: false
   check_mode: false
 
 - name: Check if uname and lvm systemid match
-  fail:
+  ansible.builtin.fail:
     msg: "'{{ lvm_uname.stdout }}' (uname) does not match '{{ lvm_systemid.stdout.split(' ')[4] }}' (lvm systemid)"
   when: lvm_uname.stdout != lvm_systemid.stdout.split(' ')[4]

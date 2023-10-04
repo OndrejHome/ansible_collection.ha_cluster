@@ -1,6 +1,6 @@
 ---
 - name: Get list of active repositories
-  command: yum repolist
+  ansible.builtin.command: yum repolist
   args:
     warn: "{{ (ansible_version.full is version('2.14', '<')) | ternary(false, omit) }}"
   register: yum_repolist
@@ -8,7 +8,7 @@
   check_mode: false
 
 - name: Enable HA/RS repository (RHEL 6/7)
-  command: >-
+  ansible.builtin.command: >-
     subscription-manager repos
     --enable="rhel-{{ repos_type }}-for-rhel-{{ ansible_distribution_major_version }}-server-rpms"
   when: >-
@@ -18,7 +18,7 @@
     and ansible_distribution_major_version in ['6','7']
 
 - name: Enable HA/RS EUS repository (RHEL 6/7)
-  command: >-
+  ansible.builtin.command: >-
     subscription-manager repos
     --enable="rhel-{{ repos_type }}-for-rhel-{{ ansible_distribution_major_version }}-server-eus-rpms"
   when: >-
@@ -28,7 +28,7 @@
     and ansible_distribution_major_version in ['6','7']
 
 - name: Enable HA E4S repository (RHEL 6/7)
-  command: >-
+  ansible.builtin.command: >-
     subscription-manager repos
     --enable="rhel-ha-for-rhel-{{ ansible_distribution_major_version }}-server-e4s-rpms"
   when: >-
@@ -38,7 +38,7 @@
     and ansible_distribution_major_version in ['6','7']
 
 - name: Enable HA/RS BETA repository (RHEL 6/7)
-  command: >-
+  ansible.builtin.command: >-
     subscription-manager repos
     --enable="rhel-{{ repos_type }}-for-rhel-{{ ansible_distribution_major_version }}-server-beta-rpms"
   when: >-
@@ -48,7 +48,7 @@
     and ansible_distribution_major_version in ['6','7']
 
 - name: Enable HA/RS repository (RHEL 8/9)
-  command: >-
+  ansible.builtin.command: >-
     subscription-manager repos
     --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-{{ (repos_type == 'rs') | ternary('resilientstorage', 'highavailability') }}-rpms"
   when: >-
@@ -58,5 +58,5 @@
     and ansible_distribution_major_version in ['8','9']
 
 - name: Enable single custom repository
-  command: subscription-manager repos --enable="{{ custom_repository }}"
+  ansible.builtin.command: subscription-manager repos --enable="{{ custom_repository }}"
   when: "custom_repository is defined and custom_repository not in yum_repolist.stdout|default(custom_repository)"

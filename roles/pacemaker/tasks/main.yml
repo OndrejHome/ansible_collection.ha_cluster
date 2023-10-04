@@ -1,6 +1,6 @@
 ---
 - name: Generate random ID for this cluster deployment
-  set_fact:
+  ansible.builtin.set_fact:
     rand_id: "{{ 1024 | random }}"
   run_once: true
   changed_when: false
@@ -12,17 +12,17 @@
 
 - name: Add a group to the inventory for remote nodes
   changed_when: false
-  group_by:
+  ansible.builtin.group_by:
     key: "cluster{{ rand_id }}_node_is_remote_{{ cluster_node_is_remote | bool }}"
 
 - name: Check if cluster consist of at least 2 nodes
-  fail:
+  ansible.builtin.fail:
     msg: 'Cluster must have at least 2 full members'
   when: groups['cluster'+rand_id+'_node_is_remote_False']|default([])|count() < 2
   run_once: true
 
 - name: Check if cluster_user_pass is not default
-  assert:
+  ansible.builtin.assert:
     that:
       - cluster_user_pass != 'testtest'
     fail_msg: 'It is strongly recommended to define a password'
@@ -30,49 +30,49 @@
   run_once: true
 
 - name: Include distribution version specific variables
-  include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ item }}"
   with_first_found:
     - "{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}.yml"
     - "{{ ansible_distribution_file_variety | lower }}{{ ansible_distribution_major_version }}.yml"
 
 - name: Include distribution specific repository configuration
-  include_tasks: "{{ item }}"
+  ansible.builtin.include_tasks: "{{ item }}"
   with_first_found:
     - files:
         - "{{ ansible_distribution | lower }}_repos.yml"
       skip: true
 
 - name: Install packages from local media
-  include_tasks: install_local_media.yml
+  ansible.builtin.include_tasks: install_local_media.yml
   when: use_local_media|bool
 
 - name: Install packages from system defined repositories
-  include_tasks: install_normal.yml
+  ansible.builtin.include_tasks: install_normal.yml
   when: not use_local_media|bool
 
 - name: Include distribution specific tasks
-  include_tasks: "{{ item }}"
+  ansible.builtin.include_tasks: "{{ item }}"
   with_first_found:
     - files:
         - "{{ ansible_distribution | lower }}_tasks.yml"
       skip: true
 
 - name: Detect the primary (ring0) cluster IP on all nodes
-  set_fact:
+  ansible.builtin.set_fact:
     ring0_ip: "{{ item }}"
   loop: "{{ ring0_ip_ordered_detection_list }}"
   when: ring0_ip|default('')|count() == 0
   # NOTE: first detected IP from given list of possibilities is being used for given node
 
 - name: Verify that we were able to detect primary (ring0) cluster IP on all nodes
-  fail:
+  ansible.builtin.fail:
     msg: "Unable to determine ring0 IP address on node {{ inventory_hostname }}. Try setting 'cluster_net_iface' for this node to give it hint where to look for cluster ip."
   when: ring0_ip|count() == 0
 
 # WARNING: the hostname is resolved from /etc/hosts file! If you change hostname
 # of machine through /etc/hosts the ansible will pick it up and use it!
 - name: Add hosts to /etc/hosts
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: '/etc/hosts'
     regexp: "{{ hostvars[item]['ring0_ip'] }} "
     line: >
@@ -84,12 +84,12 @@
     - cluster_etc_hosts | bool
 
 - name: Create cluster system group
-  group:
+  ansible.builtin.group:
     name: "{{ cluster_group }}"
     state: 'present'
 
 - name: Create cluster system user
-  user:
+  ansible.builtin.user:
     name: "{{ cluster_user }}"
     state: 'present'
     password: >-
@@ -100,7 +100,7 @@
     comment: 'HA Cluster Administrator'
 
 - name: Enable/Disable PCSD web GUI
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: "{{ pcsd_configuration_file }}"
     regexp: 'PCSD_DISABLE_GUI=.*'
     line: "PCSD_DISABLE_GUI={{ enable_pcsd_gui | bool | ternary('false', 'true') }}"
@@ -108,13 +108,13 @@
   when: enable_pcsd_gui != 'nochange'
 
 - name: Enable and start PCSD service
-  service:
+  ansible.builtin.service:
     name: 'pcsd'
     enabled: true
     state: 'started'
 
 - name: (Debian 11) Enable and start PCSD-ruby service
-  service:
+  ansible.builtin.service:
     name: 'pcsd-ruby'
     enabled: true
     state: 'started'
@@ -123,7 +123,7 @@
     - ansible_distribution_major_version == '11'
 
 - name: Setup firewall
-  include_tasks: "firewall.yml"
+  ansible.builtin.include_tasks: "firewall.yml"
   when: cluster_firewall|bool
 
 - name: Authorize cluster nodes
@@ -135,7 +135,7 @@
   when: not cluster_node_is_remote | bool
 
 - name: Set corosync redundant ring node ip if requested (from rrp_interface)
-  set_fact:
+  ansible.builtin.set_fact:
     rrp_ip: "{{ hostvars[inventory_hostname]['ansible_' + rrp_interface].ipv4.address }}"
   when:
     - rrp_ip is not defined
@@ -143,7 +143,7 @@
     - rrp_interface and 'ansible_'+rrp_interface in hostvars[inventory_hostname]
 
 - name: Validate redundant ring ip
-  fail:
+  ansible.builtin.fail:
     msg: >-
       invalid redundant ip {{ rrp_ip }} for {{ ansible_hostname }}:
       must be different than primary ip {{ ring0_ip }}
@@ -167,7 +167,7 @@
   run_once: true
 
 - name: Start cluster services on all nodes
-  service:
+  ansible.builtin.service:
     name: "{{ item }}"
     state: 'started'
   with_items:
@@ -176,7 +176,7 @@
   when: not cluster_node_is_remote | bool
 
 - name: Enable cluster services on boot
-  service:
+  ansible.builtin.service:
     name: "{{ item }}"
     enabled: true
   with_items:
@@ -198,7 +198,7 @@
   delegate_to: "{{ delegate_host }}"
   block:
     - name: Get pcs status
-      command: pcs status
+      ansible.builtin.command: pcs status
       run_once: true
       changed_when: false
       check_mode: false
@@ -207,56 +207,56 @@
     - name: Add remote node
       vars:
         cluster_hostname: "{{ hostvars[inventory_hostname][cluster_hostname_fact] }}"
-      command: pcs cluster node add-remote {{ cluster_hostname }}
+      ansible.builtin.command: pcs cluster node add-remote {{ cluster_hostname }}
       when:
         - cluster_node_is_remote | bool
         - (pcs_status.stdout | regex_search('\\b' ~ cluster_hostname ~ '\\s+\\(ocf::pacemaker:remote\\)') or '') | length == 0
 
 ### fencing setup
 - name: Setup automatic fence_xvm
-  include_tasks: fence_xvm.yml
+  ansible.builtin.include_tasks: fence_xvm.yml
   when: cluster_configure_fence_xvm is defined and cluster_configure_fence_xvm|bool
 
 - name: Setup fence_vmware_soap
-  include_tasks: fence_vmware_soap.yml
+  ansible.builtin.include_tasks: fence_vmware_soap.yml
   when: cluster_configure_fence_vmware_soap is defined and cluster_configure_fence_vmware_soap|bool
 
 - name: Setup fence_vmware_rest
-  include_tasks: fence_vmware_rest.yml
+  ansible.builtin.include_tasks: fence_vmware_rest.yml
   when: cluster_configure_fence_vmware_rest is defined and cluster_configure_fence_vmware_rest|bool
 
 - name: Setup fence_kdump
-  include_tasks: fence_kdump.yml
+  ansible.builtin.include_tasks: fence_kdump.yml
   when: cluster_configure_fence_kdump is defined and cluster_configure_fence_kdump|bool
 
 - name: Setup fence_aws
-  include_tasks: fence_aws.yml
+  ansible.builtin.include_tasks: fence_aws.yml
   when: cluster_configure_fence_aws is defined and cluster_configure_fence_aws|bool
 
 - name: Setup custom fence devices
-  include_tasks: fence_custom.yml
+  ansible.builtin.include_tasks: fence_custom.yml
 
 ### Cluster configuration setup
 - name: Configure cluster properties
-  include_tasks: cluster_property.yml
+  ansible.builtin.include_tasks: cluster_property.yml
   when: cluster_property is defined
 
 - name: Configure cluster resource defaults
-  include_tasks: cluster_resource_defaults.yml
+  ansible.builtin.include_tasks: cluster_resource_defaults.yml
   when: cluster_resource_defaults is defined
 
 - name: Configure cluster resources
-  include_tasks: cluster_resource.yml
+  ansible.builtin.include_tasks: cluster_resource.yml
   when: cluster_resource is defined
 
 - name: Configure cluster order constraints
-  include_tasks: cluster_constraint_order.yml
+  ansible.builtin.include_tasks: cluster_constraint_order.yml
   when: cluster_constraint_order is defined
 
 - name: Configure cluster colocation constraints
-  include_tasks: cluster_constraint_colocation.yml
+  ansible.builtin.include_tasks: cluster_constraint_colocation.yml
   when: cluster_constraint_colocation is defined
 
 - name: Configure cluster location constraints
-  include_tasks: cluster_constraint_location.yml
+  ansible.builtin.include_tasks: cluster_constraint_location.yml
   when: cluster_constraint_location is defined

@@ -1,17 +1,17 @@
 ---
 - name: Check if 'vm_name' variable is defined for each node
-  fail:
+  ansible.builtin.fail:
     msg: "'vm_name' must be defined for each node and contain name of VM as seen by hypervisor."
   when: vm_name is not defined
 
 - name: Create /etc/cluster directory
-  file:
+  ansible.builtin.file:
     path: '/etc/cluster'
     state: 'directory'
     mode: '0755'
 
 - name: Copy fence_xvm key to all cluster nodes
-  copy:
+  ansible.builtin.copy:
     src: "{{ fence_xvm_key }}"
     dest: '/etc/cluster/fence_xvm.key'
     owner: 'root'

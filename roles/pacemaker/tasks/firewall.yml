@@ -5,14 +5,14 @@
     - not (ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6')
   block:
     - name: Enable and start firewalld service
-      service:
+      ansible.builtin.service:
         name: 'firewalld'
         enabled: true
         state: 'started'
 
     - name: Enable 'high-availability' firewalld service
       ansible.posix.firewalld:
-        service: 'high-availability'
+        ansible.builtin.service: 'high-availability'
         permanent: true
         state: 'enabled'
         immediate: true
@@ -23,7 +23,7 @@
     - ansible_distribution_major_version == '6'
   block:
     - name: Copy iptables configuration
-      copy:
+      ansible.builtin.copy:
         src: 'iptables'
         dest: '/etc/sysconfig/iptables'
         owner: 'root'
@@ -33,10 +33,10 @@
         - Restart iptables
 
     - name: Enable and start iptables service
-      service:
+      ansible.builtin.service:
         name: 'iptables'
         enabled: true
         state: 'started'
 
     - name: Run handlers to reload iptables on system
-      meta: flush_handlers
+      ansible.builtin.meta: flush_handlers

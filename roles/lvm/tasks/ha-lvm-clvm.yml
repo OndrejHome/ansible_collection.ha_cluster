@@ -1,6 +1,6 @@
 ---
 - name: Get list of active repositories
-  command: yum repolist
+  ansible.builtin.command: yum repolist
   args:
     warn: false
   register: yum_repolist
@@ -8,26 +8,26 @@
   check_mode: false
 
 - name: (RHEL) Enable Resilient Storage (RS) repository
-  command: subscription-manager repos --enable="rhel-rs-for-rhel-{{ ansible_distribution_major_version }}-server-rpms"
+  ansible.builtin.command: subscription-manager repos --enable="rhel-rs-for-rhel-{{ ansible_distribution_major_version }}-server-rpms"
   when: >-
     ['rhel-rs-for-rhel-',ansible_distribution_major_version,'-server-rpms'] | join not in yum_repolist.stdout
     and enable_repos|bool
     and ansible_distribution == 'RedHat'
 
 - name: (RHEL) Enable Resilient Storage (RS) EUS repository
-  command: subscription-manager repos --enable="rhel-rs-for-rhel-{{ ansible_distribution_major_version }}-server-eus-rpms"
+  ansible.builtin.command: subscription-manager repos --enable="rhel-rs-for-rhel-{{ ansible_distribution_major_version }}-server-eus-rpms"
   when: >-
     ['rhel-rs-for-rhel-',ansible_distribution_major_version,'-server-eus-rpms'] | join not in yum_repolist.stdout
     and enable_eus_repos|bool
     and ansible_distribution == 'RedHat'
 
 - name: Install packages for CLVM
-  yum:
+  ansible.builtin.yum:
     name: 'lvm2-cluster'
     state: 'installed'
 
 - name: Enable locking_type=3
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: '/etc/lvm/lvm.conf'
     regexp: '^\s*locking_type'
     line: '        locking_type = 3'
@@ -35,7 +35,7 @@
     - Rebuild initramfs
 
 - name: Enable and start clvmd service (EL6)
-  service:
+  ansible.builtin.service:
     name: 'clvmd'
     enabled: true
     state: 'started'

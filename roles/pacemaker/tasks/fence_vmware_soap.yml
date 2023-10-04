@@ -1,21 +1,21 @@
 ---
 - name: Check if 'vm_name' variable is defined for each node
-  fail:
+  ansible.builtin.fail:
     msg: "'vm_name' must be defined for each node and contain name or UUID of VM as seen by hypervisor."
   when: vm_name is not defined
 
 - name: Check if 'fence_vmware_ipaddr' variable is defined
-  fail:
+  ansible.builtin.fail:
     msg: "'fence_vmware_ipaddr' variable has to be defined and contain 'hostname' or 'IP address' of vCenter/hypervisor"
   when: fence_vmware_ipaddr is not defined
 
 - name: Check if 'fence_vmware_login' variable is defined
-  fail:
+  ansible.builtin.fail:
     msg: "'fence_vmware_login' variable has to be defined and contain username to vCenter or hypervisor"
   when: fence_vmware_login is not defined
 
 - name: Check if 'fence_vmware_passwd' variable is defined
-  fail:
+  ansible.builtin.fail:
     msg: "'fence_vmware_passwd' variable has to be defined and contain password for user {{ fence_vmware_login }}"
   when: fence_vmware_passwd is not defined
 

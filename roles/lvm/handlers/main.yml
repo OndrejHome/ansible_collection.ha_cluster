@@ -1,20 +1,20 @@
 ---
 - name: Deactivate LV
-  command: lvchange -an "{{ item.0.name }}/{{ item.1.name }}" --deltag pacemaker
+  ansible.builtin.command: lvchange -an "{{ item.0.name }}/{{ item.1.name }}" --deltag pacemaker
   with_subelements:
     - "{{ tagging_vgs }}"
     - lvs
 
 - name: Deactivate VG
-  command: vgchange -an "{{ item.name }}"
+  ansible.builtin.command: vgchange -an "{{ item.name }}"
   with_items:
     - "{{ tagging_vgs }}"
 
 - name: Remove VG tag
-  command: vgchange --deltag pacemaker "{{ item.name }}"
+  ansible.builtin.command: vgchange --deltag pacemaker "{{ item.name }}"
   with_items:
     - "{{ tagging_vgs }}"
 
 - name: Rebuild initramfs
-  command: dracut -f
+  ansible.builtin.command: dracut -f
   when: ansible_distribution_major_version >= "6"

@@ -1,6 +1,6 @@
 ---
 - name: Enable kdump service
-  service:
+  ansible.builtin.service:
     name: "{{ kdump_service_name }}"
     state: 'started'
     enabled: true
