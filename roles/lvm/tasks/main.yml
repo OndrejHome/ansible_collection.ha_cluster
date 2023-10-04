@@ -1,17 +1,17 @@
 ---
-- name: Check if proper HALVMtype is selected for EL6/EL7 platform
+- name: Check if proper halvmtype is selected for EL6/EL7 platform
   fail:
-    msg: "On EL6/EL7 you have to use 'tagging' or 'clmv' HALVMtype."
+    msg: "On EL6/EL7 you have to use 'tagging' or 'clmv' halvmtype."
   when:
     - ansible_distribution_major_version in ["6","7"]
-    - not (HALVMtype in ['tagging','clvm'])
+    - not (halvmtype in ['tagging','clvm'])
 
-- name: Check if proper HALVMtype is selected for EL8/EL9 platform
+- name: Check if proper halvmtype is selected for EL8/EL9 platform
   fail:
-    msg: "On EL8/EL9 you have to use 'systemid' or 'lvmlockd' HALVMtype."
+    msg: "On EL8/EL9 you have to use 'systemid' or 'lvmlockd' halvmtype."
   when:
     - ansible_distribution_major_version in ["8","9"]
-    - not (HALVMtype in ['systemid','lvmlockd'])
+    - not (halvmtype in ['systemid','lvmlockd'])
 
 - name: Disable use_lvmetad in /etc/lvm/lvm.conf if it exists
   lineinfile:
@@ -46,19 +46,19 @@
 
 - name: Setup HA-LVM tagging
   include_tasks: ha-lvm-tagging.yml
-  when: HALVMtype == "tagging"
+  when: halvmtype == "tagging"
 
 - name: Setup HA-LVM CLVM
   include_tasks: ha-lvm-clvm.yml
-  when: HALVMtype == "clvm"
+  when: halvmtype == "clvm"
 
 - name: Setup HA-LVM systemid
   include_tasks: ha-lvm-systemid.yml
-  when: HALVMtype == "systemid"
+  when: halvmtype == "systemid"
 
 - name: Setup HA-LVM lvmlockd
   include_tasks: ha-lvm-lockd.yml
-  when: HALVMtype == "lvmlockd"
+  when: halvmtype == "lvmlockd"
 
 - name: Configure tagging type VGs/LVs
   include_tasks: create_tagging_vgs_lvs.yml
@@ -66,7 +66,7 @@
 
 - name: Configure clvm type VGs/LVs
   include_tasks: create_clvm_vgs_lvs.yml
-  when: clvm_vgs is defined and HALVMtype == "clvm"
+  when: clvm_vgs is defined and halvmtype == "clvm"
 
 - name: Check if 'use_devicesfile' is enabled on EL8/EL9 platform
   command: /usr/sbin/lvmdevices --check
@@ -90,8 +90,8 @@
 
 - name: Configure systemid type VGs/LVs
   include_tasks: create_systemid_vgs_lvs.yml
-  when: systemid_vgs is defined and HALVMtype == "systemid"
+  when: systemid_vgs is defined and halvmtype == "systemid"
 
 - name: Configure lvmlockd type VGs/LVs
   include_tasks: create_lvmlockd_vgs_lvs.yml
-  when: lvmlockd_vgs is defined and HALVMtype == "lvmlockd"
+  when: lvmlockd_vgs is defined and halvmtype == "lvmlockd"

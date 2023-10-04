@@ -3,7 +3,7 @@
 # -'tagging' (default) or 'clvm'
 # on EL 8 and EL9:
 # - 'systemid' or 'lvmlockd'
-HALVMtype: "tagging"
+halvmtype: "tagging"
 
 # List of localy activated VGs
 # This role will automatically detect the VG of root filesystem when used.

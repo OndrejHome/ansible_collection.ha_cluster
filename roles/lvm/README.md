@@ -18,7 +18,7 @@ Role Variables
      - default is 'tagging'
   
     ```
-    HALVMtype: 'tagging'
+    halvmtype: 'tagging'
     ```
 
   - (optional) - this is applied only when 'tagging' mode is selected. List of VGs that should be included in 'volume_list' additionally to VG on which root filesystem resides. By default this list is empty, below example shows how to specify the list of VGs.
@@ -65,19 +65,19 @@ Example playbook for clvm variant of HA-LVM.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'clvm' }
+         - { role: 'ondrejhome.ha_cluster.lvm', halvmtype: 'clvm' }
 
 Example playbook for systemid variant of HA-LVM.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'systemid' }
+         - { role: 'ondrejhome.ha_cluster.lvm', halvmtype: 'systemid' }
 
 Example playbook for lvmlockd variant of HA-LVM.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'lvmlockd' }
+         - { role: 'ondrejhome.ha_cluster.lvm', halvmtype: 'lvmlockd' }
 
 Example of playbook for tagged variant with one VG and one LV on whole VG.
 
@@ -116,7 +116,7 @@ Example playbook for clvm variant combined with tagging variant and creation of 
               - name: 'lv_name4'
                 size: '100M'
       roles:
-         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'clvm' }
+         - { role: 'ondrejhome.ha_cluster.lvm', halvmtype: 'clvm' }
 
 Example of playbook for systemid variant with one VG and one LV on whole VG.
 
@@ -129,7 +129,7 @@ Example of playbook for systemid variant with one VG and one LV on whole VG.
               - name: 'lv_name5'
                 size: '200M'
       roles:
-         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'systemid' }
+         - { role: 'ondrejhome.ha_cluster.lvm', halvmtype: 'systemid' }
 
 Example of playbook for systemid variant with one VG and one LV on whole VG.
 
@@ -142,7 +142,7 @@ Example of playbook for systemid variant with one VG and one LV on whole VG.
               - name: 'lv_name6'
                 size: '200M'
       roles:
-         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'lvmlockd' }
+         - { role: 'ondrejhome.ha_cluster.lvm', halvmtype: 'lvmlockd' }
 
 License
 -------
