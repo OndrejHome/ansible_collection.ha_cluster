@@ -1,10 +1,8 @@
-ha-cluster-lvm
+ondrejhome.ha_cluster.lvm
 =========
 
 Role for enabling Highly Available LVM (HA-LVM) configuration in pacemaker cluster.
 This role can also create LVs and VGs for both tagging and clvm variant, check the examples to see how.
-
-rgmanager-specific code was removed from this role and moved into separate role - [ondrejhome.ha_cluster_lvm_rgmanager](https://github.com/OndrejHome/ansible.ha-cluster-lvm-rgmanager).
 
 Requirements
 ------------
@@ -55,31 +53,31 @@ Example playbook for tagging HA-LVM.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm' }
+         - { role: 'ondrejhome.ha_cluster.lvm' }
 
 Example playbook for tagging HA-LVM with extra local VG names 'vg_local'.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm', local_vg_list: [ 'vg_local' ] }
+         - { role: 'ondrejhome.ha_cluster.lvm', local_vg_list: [ 'vg_local' ] }
 
 Example playbook for clvm variant of HA-LVM.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm', HALVMtype: 'clvm' }
+         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'clvm' }
 
 Example playbook for systemid variant of HA-LVM.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm', HALVMtype: 'systemid' }
+         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'systemid' }
 
 Example playbook for lvmlockd variant of HA-LVM.
 
     - hosts: servers
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm', HALVMtype: 'lvmlockd' }
+         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'lvmlockd' }
 
 Example of playbook for tagged variant with one VG and one LV on whole VG.
 
@@ -92,7 +90,7 @@ Example of playbook for tagged variant with one VG and one LV on whole VG.
               - name: 'lv_name5'
                 size: '200M'
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm' }
+         - { role: 'ondrejhome.ha_cluster.lvm' }
 
 
 Example playbook for clvm variant combined with tagging variant and creation of VGs/LVs for both clustered and tagging VGs.
@@ -118,7 +116,7 @@ Example playbook for clvm variant combined with tagging variant and creation of 
               - name: 'lv_name4'
                 size: '100M'
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm', HALVMtype: 'clvm' }
+         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'clvm' }
 
 Example of playbook for systemid variant with one VG and one LV on whole VG.
 
@@ -131,7 +129,7 @@ Example of playbook for systemid variant with one VG and one LV on whole VG.
               - name: 'lv_name5'
                 size: '200M'
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm', HALVMtype: 'systemid' }
+         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'systemid' }
 
 Example of playbook for systemid variant with one VG and one LV on whole VG.
 
@@ -144,7 +142,7 @@ Example of playbook for systemid variant with one VG and one LV on whole VG.
               - name: 'lv_name6'
                 size: '200M'
       roles:
-         - { role: 'ondrejhome.ha-cluster-lvm', HALVMtype: 'lvmlockd' }
+         - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'lvmlockd' }
 
 License
 -------

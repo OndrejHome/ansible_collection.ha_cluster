@@ -1,2 +1,3 @@
 ---
-requires_ansible: '>=2.9.10'
+requires_ansible: '>=2.9.12'
+# roles/pacemaker - version 2.9.10 and 2.9.11 will fail with error "'hostvars' is undefined" when trying to configure remote nodes.

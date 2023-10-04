@@ -1,4 +1,4 @@
-ha-cluster-pacemaker
+ondrejhome.ha_cluster.pacemaker
 =========
 
 Role for configuring and expanding basic pacemaker cluster on CentOS/RHEL 6/7/8/9, AlmaLinux 8/9, Rocky Linux 8/9, Fedora 31/32/33/34/35/36/37/38 and CentOS 8 Stream systems.
@@ -33,25 +33,19 @@ When reporting issue please provide following information (if possible):
 Requirements
 ------------
 
-This role depend on role [ondrejhome.pcs-modules-2](https://github.com/OndrejHome/ansible.pcs-modules-2).
-
-**Ansible 2.8** or later. (NOTE: it might be possible to use earlier versions, in case of issues please try updating Ansible to 2.8+)
+This role uses `pcs_*` modules contained in the [`ondrejhome.ha_cluster` collection](FIXME).
 
 **RHEL 6/7/8:** It is expected that machines will already be registered. Role will by default enable access to 'High Availability' or 'Resilient storage' channel. If this is not desired check the `enable_repos` variable.
 
-**RHEL/CentOS 7:** This role requires at least version `2.9` of `python-jinja2` library. If not present you may encounter error described in Issue #6. To get the updated version of `python-jinja2` and its dependencies you can use following RPM repository - https://copr.fedorainfracloud.org/coprs/ondrejhome/ansible-deps-el7/ for both CentOS 7 and RHEL 7.
+**RHEL/CentOS 7:** This role requires at least version `2.9` of `python-jinja2` library. To get the updated version of `python-jinja2` and its dependencies you can use following RPM repository - https://copr.fedorainfracloud.org/coprs/ondrejhome/ansible-deps-el7/ for both CentOS 7 and RHEL 7.
 
-**CentOS 8 Stream** Tested with version 20201211 minimal usable ansible version is **2.9.16/2.10.4**. Version **2.8.18** was **not** working at time of testing. This is related to [Service is in unknown state #71528](https://github.com/ansible/ansible/issues/71528).
+**CentOS 8 Stream** Tested with version 20201211 minimal usable ansible version is **2.9.16/2.10.4**.
 
 **Debian Buster** Tested with version 20210310 with ansible version **2.10** and **Debian Bullseye** Tested with version 20220326 with ansible version **2.12**. Debian part of this role does not include the stonith configuration and the firewall configuration. **Note:** This role went only through limited testing on Debian - not all features of this role were tested.
 
 **Debian Bookworm** Tested with ansible version **2.14** and **Debian Bookwork**. Debian part of this role does not include the stonith configuration and the firewall configuration. **Note:** This role went only through limited testing on Debian - not all features of this role were tested.
 
-Ansible version **2.9.10** and **2.9.11** will fail with error `"'hostvars' is undefined"` when trying to configure remote nodes. This applies only when there is at least one node with `cluster_node_is_remote=True`. **Avoid these Ansible versions** if you plan to configure remote nodes with this role.
-
 On **CentOS Linux 8** you have to ensure that BaseOS and Appstream repositories are working properly. As the CentOS Linux 8 is in the End-Of-Life phase, this role will configure HA repository to point to vault.centos.org if repository configuration (`enable_repos: true`) is requested (it is by default).
-
-**pcs-0.11** version distributions (AlmaLinux 9, Rocky Linux 9, RHEL 9, Fedora 36/37/38) are supported only with ondrejhome.pcs-modules-2 version 27.0.0 or higher.
 
 Role Variables
 --------------
@@ -346,14 +340,14 @@ Example Playbook
 
     - hosts: cluster
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'test-cluster' }
+         - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'test-cluster' }
 
 **Example playbook B** for creating cluster named 'test-cluster' without configuring firewall and without `fence_xvm`.
 For cluster to get properly authorized it is expected that firewall is already configured or disabled.
 
     - hosts: cluster
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'test-cluster', cluster_firewall: false, cluster_configure_fence_xvm: false }
+         - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'test-cluster', cluster_firewall: false, cluster_configure_fence_xvm: false }
 
 **Example playbook C** for creating cluster named `vmware-cluster` with `fence_vmware_soap` fencing device.
 
@@ -363,13 +357,13 @@ For cluster to get properly authorized it is expected that firewall is already c
         fence_vmware_login: 'vcenter-username'
         fence_vmware_passwd: 'vcenter-password-for-username'
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'vmware-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_vmware_soap: true }
+         - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'vmware-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_vmware_soap: true }
 
 **Example playbook D** for creating cluster named `test-cluster` where `/etc/hosts` is not modified:
 
     - hosts: cluster
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'test-cluster', cluster_etc_hosts: false }
+         - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'test-cluster', cluster_etc_hosts: false }
 
 **Example playbook E** for creating cluster named `vmware-cluster` with single `fence_vmware_rest` fencing device for all cluster nodes.
 
@@ -379,13 +373,13 @@ For cluster to get properly authorized it is expected that firewall is already c
         fence_vmware_login: 'vcenter-username'
         fence_vmware_passwd: 'vcenter-password-for-username'
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'vmware-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_vmware_rest: true, cluster_configure_stonith_style: 'one-device-per-cluster' }
+         - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'vmware-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_vmware_rest: true, cluster_configure_stonith_style: 'one-device-per-cluster' }
 
 **Example playbook F** for creating cluster named `aws-cluster` with single `fence_aws` fencing device for all cluster nodes.
 
     - hosts: cluster
       roles:
-        - { role: 'ansible.ha-cluster-pacemaker', cluster_name: 'aws-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_aws: true, cluster_configure_stonith_style: 'one-device-per-cluster', enable_repos: false, fence_aws_region: 'aws-region' }
+        - { role: 'ansible.ha_cluster.pacemaker', cluster_name: 'aws-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_aws: true, cluster_configure_stonith_style: 'one-device-per-cluster', enable_repos: false, fence_aws_region: 'aws-region' }
 
 **Example playbook Resources configuration** .
 
@@ -409,7 +403,7 @@ For cluster to get properly authorized it is expected that firewall is already c
           - name: 'failure-timeout'
             value: '30'
       roles:
-         - { role: 'ondrejhome.ha-cluster-pacemaker', cluster_name: 'apache-cluster'}
+         - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'apache-cluster'}
 
 Inventory file example for CentOS/RHEL/Fedora systems createing basic clusters.
 
@@ -443,9 +437,6 @@ Inventory file example with fence_aws:
     172.31.0.1	instance_id="i-acbdefg1234567890"
     172.31.0.2	instance_id="i-acbdefg0987654321"
 
-Old video examples of running role with defaults for:
-  - CentOS 7.6 installing CentOS 7.6 two node cluster: https://asciinema.org/a/226466
-  - Fedora 29 installing Fedora 29 two node cluster: https://asciinema.org/a/226467
 
 License
 -------
