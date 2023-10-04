@@ -33,7 +33,7 @@ When reporting issue please provide following information (if possible):
 Requirements
 ------------
 
-This role uses `pcs_*` modules contained in the [`ondrejhome.ha_cluster` collection](FIXME).
+This role uses `pcs_*` modules contained in the [`ondrejhome.ha_cluster` collection](https://galaxy.ansible.com/ui/repo/published/ondrejhome/ha_cluster/).
 
 **RHEL 6/7/8:** It is expected that machines will already be registered. Role will by default enable access to 'High Availability' or 'Resilient storage' channel. If this is not desired check the `enable_repos` variable.
 
