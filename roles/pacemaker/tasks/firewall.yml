@@ -12,7 +12,7 @@
 
     - name: Enable 'high-availability' firewalld service
       ansible.posix.firewalld:
-        ansible.builtin.service: 'high-availability'
+        service: 'high-availability'
         permanent: true
         state: 'enabled'
         immediate: true
