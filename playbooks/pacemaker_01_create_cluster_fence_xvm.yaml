@@ -1,0 +1,5 @@
+---
+- name: Create Pacemaker Cluster (with fence_xvm for fencing)
+  hosts: "{{target|default('cluster')}}"
+  roles:
+    - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'test-cluster' }

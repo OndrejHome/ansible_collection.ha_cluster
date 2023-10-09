@@ -1,0 +1,9 @@
+---
+- name: Create Pacemaker Cluster (with fence_vmware_rest fencing)
+  hosts: "{{target|default('cluster')}}"
+  vars:
+    fence_vmware_ipaddr: 'vcenter-hostname-or-ip'
+    fence_vmware_login: 'vcenter-username'
+    fence_vmware_passwd: 'vcenter-password-for-username'
+  roles:
+    - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'vmware-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_vmware_rest: true }

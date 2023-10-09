@@ -1,0 +1,12 @@
+---
+- name: Configure HA-LVM ('systemid' type) and create shared VG and LV
+  hosts: "{{target|default('cluster')}}"
+  vars:
+    systemid_vgs:
+      - name: 'vg_systemid'
+        pvs: '/dev/sdb'
+        lvs:
+          - name: 'lv_name5'
+            size: '200M'
+  roles:
+    - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'systemid' }

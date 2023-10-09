@@ -1,0 +1,5 @@
+---
+- name: Create Pacemaker Cluster (with fence_aws fencing)
+  hosts: "{{target|default('cluster')}}"
+  roles:
+    - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'aws-cluster', cluster_configure_fence_xvm: false, cluster_configure_fence_aws: true, cluster_configure_stonith_style: 'one-device-per-cluster', enable_repos: false, fence_aws_region: 'aws-region' }

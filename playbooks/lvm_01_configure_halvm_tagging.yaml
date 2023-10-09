@@ -1,0 +1,12 @@
+---
+- name: Configure HA-LVM ('tagging' type) and create shared VG and LV
+  hosts: "{{target|default('cluster')}}"
+  vars:
+    tagging_vgs:
+      - name: 'vg_shared'
+        pvs: '/dev/sdb'
+        lvs:
+          - name: 'lv_name5'
+            size: '200M'
+  roles:
+    - { role: 'ondrejhome.ha_cluster.lvm' }

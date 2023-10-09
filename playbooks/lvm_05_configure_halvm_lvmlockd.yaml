@@ -1,0 +1,12 @@
+---
+- name: Configure HA-LVM ('lvmlockd' type) and create shared VG and LV
+  hosts: "{{target|default('cluster')}}"
+  vars:
+    lvmlockd_vgs:
+      - name: 'vg_lvmlockd'
+        pvs: '/dev/sdb'
+        lvs:
+          - name: 'lv_name6'
+            size: '200M'
+  roles:
+    - { role: 'ondrejhome.ha_cluster.lvm', HALVMtype: 'lvmlockd' }

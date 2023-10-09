@@ -1,0 +1,5 @@
+---
+- name: Create Pacemaker Cluster (without fencing and without firewall configuration)
+  hosts: "{{target|default('cluster')}}"
+  roles:
+    - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'test-cluster', cluster_firewall: false, cluster_configure_fence_xvm: false }
