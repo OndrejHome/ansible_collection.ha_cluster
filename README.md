@@ -40,14 +40,13 @@ collections:
 Check the relevant documentation pages for the modules or use `ansible-doc <module_name>` from command line to bring up list of supported attributes and examples of use for all modules.
 
 For example to check information on `ondrejhome.ha_cluster.pcs_resource`:
-- from CLI (when collection is installed)
-  ~~~
-  # ansible-doc ondrejhome.ha_cluster.pcs_resource
-  ~~~
+
+- from CLI (when collection is installed) - `ansible-doc ondrejhome.ha_cluster.pcs_resource`
 - via browser - check the [Contents](https://galaxy.ansible.com/ui/repo/published/ondrejhome/ha_cluster/content/) of this collection and click on [`pcs_resource` module](https://galaxy.ansible.com/ui/repo/published/ondrejhome/ha_cluster/content/module/pcs_resource/).
 
 ### Reporting issues
 You can report issue via [Github Issues page](https://github.com/OndrejHome/ansible_collection.ha_cluster/issues) or via email `ondrej-xa2iel8u@famera.cz`. When reporting issues please include following information in your report:
+
 - your ansible version - `ansible --version`
 - version of installed `ondrejhome.ha_cluster` collection and its dependencies - `ansible-galaxy collection list |grep -E 'ansible.posix|community.general|ondrejhome.ha_cluster'`
 - (if possible) playbook that triggered error/issue
@@ -55,6 +54,7 @@ You can report issue via [Github Issues page](https://github.com/OndrejHome/ansi
 
 ### Contributing new functionality to collection
 At this moment the contributions are accepted only in the standalone roles below and then once  accepted there, they will appear in this collection:
+
 - (role) [`ondrejhome.ha-cluster-pacemaker` Pull requests](https://github.com/OndrejHome/ansible.ha-cluster-pacemaker/pulls)
 - (role) [`ondrejhome.ha-cluster-lvm` Pull requests](https://github.com/OndrejHome/ansible.ha-cluster-lvm/pulls)
 - (modules) [`ondrejhome.pcs-modules-2` Pull requests](https://github.com/OndrejHome/ansible.pcs-modules-2/pulls)
