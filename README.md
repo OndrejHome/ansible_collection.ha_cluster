@@ -1,8 +1,7 @@
 ## ondrejhome.ha_cluster collection
+Ansible collection for deploying and configuring HA clusters based on pacemker.
 
-WARNING: This is a proof-of-concept merge of several roles and modules into one collection.
-
-This Ansible collection is collection of following code that is also available as standalone roles:
+This Ansible collection is based on code from following standalone roles:
 
 - (role) [ondrejhome.ha-cluster-pacemaker](https://github.com/OndrejHome/ansible.ha-cluster-pacemaker)
 - (role) [ondrejhome.ha-cluster-lvm](https://github.com/OndrejHome/ansible.ha-cluster-lvm)
@@ -12,8 +11,8 @@ This Ansible collection is collection of following code that is also available a
 ### How to use the roles from this collection
 Check the relevant README.md files for given roles that contains both the used parameters as well as example playbooks and inventories.
 
-- [`ondrejhome.ha_cluster.pacemaker` playbook examples](https://github.com/OndrejHome/ansible_collection.ha_cluster/roles/pacemaker/README.md#example-playbook)
-- [`ondrejhome.ha_cluster.lvm` playbook examples](https://github.com/OndrejHome/ansible_collection.ha_cluster/roles/lvm/README.md#example-playbook)
+- [`ondrejhome.ha_cluster.pacemaker` playbook examples](https://github.com/OndrejHome/ansible_collection.ha_cluster/blob/master/roles/pacemaker/README.md#example-playbook)
+- [`ondrejhome.ha_cluster.lvm` playbook examples](https://github.com/OndrejHome/ansible_collection.ha_cluster/blob/master/roles/lvm/README.md#example-playbook)
 
 ### To use this collection from regular ansible
 When connected to Internet (online) use command below (dependencies will be installed automatically):
@@ -24,7 +23,7 @@ When not connected to Internet (offline), first download the tarball of collecti
 ~~~
 # ansible-galaxy collection install ansible-posix-1.5.4.tar.gz
 # ansible-galaxy collection install community-general-7.0.1.tar.gz
-# ansible-galaxy collection install ondrejhome-ha_cluster-0.0.4.tar.gz
+# ansible-galaxy collection install ondrejhome-ha_cluster-1.0.0.tar.gz
 ~~~
 
 ### To use this collection from AWX

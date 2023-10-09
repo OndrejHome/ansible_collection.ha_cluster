@@ -8,7 +8,7 @@ namespace: ondrejhome
 name: ha_cluster
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 0.0.1
+version: 1.0.0
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
@@ -20,7 +20,7 @@ authors:
 
 ### OPTIONAL but strongly recommended
 # A short summary description of the collection
-description: Modules and roles for creating and managing pacemaker-based clusters.
+description: Ansible collection for deploying and configuring HA clusters based on pacemker.
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'
