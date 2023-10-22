@@ -28,6 +28,7 @@
   ansible.builtin.command: lvmdevices --adddev "{{ item.pvs }}"
   with_items:
     - "{{ systemid_vgs }}"
+  changed_when: true
   when:
     - ansible_distribution_major_version in ["8","9"]
     - use_devicesfile_check is succeeded

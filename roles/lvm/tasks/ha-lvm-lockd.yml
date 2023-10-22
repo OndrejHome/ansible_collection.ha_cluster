@@ -9,6 +9,7 @@
 
 - name: (RHEL) Enable Resilient Storage (RS) repository
   ansible.builtin.command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-resilientstorage-rpms"
+  changed_when: true
   when: >-
     ['rhel-',ansible_distribution_major_version,'-for-x86_64-resilientstorage-rpms'] | join not in yum_repolist.stdout
     and enable_repos|bool
@@ -16,6 +17,7 @@
 
 - name: (RHEL) Enable Resilient Storage (RS) EUS repository
   ansible.builtin.command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-for-x86_64-resilientstorage-eus-rpms"
+  changed_when: true
   when: >-
     ['rhel-',ansible_distribution_major_version,'-for-x86_64-resilientstorage-eus-rpms'] | join not in yum_repolist.stdout
     and enable_eus_repos|bool
