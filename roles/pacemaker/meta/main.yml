@@ -11,6 +11,7 @@ galaxy_info:
         - 7
         - 8
         - 9
+        - 10
     - name: Fedora
       versions:
         - 31
@@ -22,6 +23,7 @@ galaxy_info:
         - 37
         - 38
         - 39
+        - 40
     - name: Debian
       versions:
         - 'buster'

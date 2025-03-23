@@ -39,13 +39,21 @@ This role uses `pcs_*` modules contained in the [`ondrejhome.ha_cluster` collect
 
 **RHEL/CentOS 7:** This role requires at least version `2.9` of `python-jinja2` library. To get the updated version of `python-jinja2` and its dependencies you can use following RPM repository - https://copr.fedorainfracloud.org/coprs/ondrejhome/ansible-deps-el7/ for both CentOS 7 and RHEL 7.
 
-**CentOS 8 Stream** Tested with version 20201211 minimal usable ansible version is **2.9.16/2.10.4**.
+**CentOS 8 Stream** Tested with version 20240129 minimal recommended ansible version is **2.11.0** which starts to identify system as 'CentOS' instead of 'RedHat' (unline CentOS Linux). The older CentOS 8 Stream versions 20201211 minimal usable ansible version is **2.9.16/2.10.4**. Version **2.8.18** was **not** working at time of testing. This is related to [Service is in unknown state #71528](https://github.com/ansible/ansible/issues/71528).
+
+**CentOS 9 Stream** Tested with version 20240129 minimal recommended ansible is **2.11.0**.
 
 **Debian Buster** Tested with version 20210310 with ansible version **2.10** and **Debian Bullseye** Tested with version 20220326 with ansible version **2.12**. Debian part of this role does not include the stonith configuration and the firewall configuration. **Note:** This role went only through limited testing on Debian - not all features of this role were tested.
 
 **Debian Bookworm** Tested with ansible version **2.14** and **Debian Bookwork**. Debian part of this role does not include the stonith configuration and the firewall configuration. **Note:** This role went only through limited testing on Debian - not all features of this role were tested.
 
+Ansible version **2.9.10** and **2.9.11** will fail with error `"'hostvars' is undefined"` when trying to configure remote nodes. This applies only when there is at least one node with `cluster_node_is_remote=True`. **Avoid these Ansible versions** if you plan to configure remote nodes with this role.
+
 On **CentOS Linux 8** you have to ensure that BaseOS and Appstream repositories are working properly. As the CentOS Linux 8 is in the End-Of-Life phase, this role will configure HA repository to point to vault.centos.org if repository configuration (`enable_repos: true`) is requested (it is by default).
+
+**pcs-0.11** version distributions (AlmaLinux 9, Rocky Linux 9, RHEL 9, Fedora 36/37/38) are supported only with ondrejhome.pcs-modules-2 version 27.0.0 or higher.
+
+**pcs-0.12** version distributions (AlmaLinux 10, CentOS Stream 10) are supported only with ondrejhome.pcs-modules-2 version 31.0.0 or higher.
 
 Role Variables
 --------------
@@ -321,6 +329,8 @@ Role Variables
 
   - Configure cluster location constraints (Not mandatory)
 
+    **node based**
+
     ```
     cluster_constraint_location:
       - resource: required
@@ -328,10 +338,83 @@ Role Variables
         score: optional
     ```
 
+    **rule based** (_needs ondrejhome.pcs-modules-2 version 30.0.0 or newer_)
+
+    ```
+    cluster_constraint_location:
+      - resource: required
+        constraint_id: required
+        rule: required
+        score: optional
+    ```
+
 Security considerations
 -----------------------
 
 Please consider updating the default value for `cluster_user_pass`.
+
+To protect the sensitive values in variables passed to this role you can use `ansible-vault` to encrypt them. The recommended approach is to create a separate file with desired variables and their values, encrypt the whole file with `ansible-vault encrypt` and then include this file in `pre_tasks:` section so it is loaded before the role is executed. Example below illustrates this whole process.
+
+**Creating encrypted_vars.yaml file**
+
+- 1. Create plain text `encrypted_vars.yaml` file with your desired secret values
+    ```
+    # cat encrypted_vars.yaml
+    ---
+    cluster_user_pass: 'cluster-user-pass'
+    fence_vmware_login: 'vcenter-user'
+    fence_vmware_passwd: 'vcenter-pass'
+    ```
+
+- 2. Encrypt file suing `ansible-vault`
+    ```
+    # ansible-vault encrypt encrypted_vars.yaml
+    ```
+
+- 3. Verify the new content of `encrypted_vars.yaml`
+    ```
+    # cat encrypted_vars.yaml
+    $ANSIBLE_VAULT;1.1;AES256
+    31306461386430...
+    ```
+
+**Example playbook that is using values from `encrypted_vars.yaml`**
+
+    - hosts: cluster
+       pre_tasks:
+         - include_vars: encrypted_vars.yaml
+       roles:
+         - { role: 'ondrejhome.ha_cluster.pacemaker', cluster_name: 'test-cluster' }
+
+**NOTE:** Encrypting only the variable's value and putting it into `vars:` is discouraged as it could results in errors like `argument 1 must be str, not AnsibleVaultEncryptedUnicode`. Approach that encrypts whole file seems to be not affected by this issue.
+
+Ansible module_defaults
+-----------------------
+
+While this role does not expose all configuration options through variables, one can use the [`module_defaults`](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_module_defaults.html#module-defaults) to change the default values of parameters that this role does not use. Below is non-exhaustive list of examples where this may become useful.
+
+**Example module_default A** for setting the totem token to 15 seconds
+
+    - hosts: cluster
+      modules_defaults:
+        pcs_cluster:
+          token: 15000               # default is 'null' - depends on OS default value
+
+**Example module_default B** for disabling installation of weak dependencies on EL8+/Fedora systems
+
+    - hosts: cluster
+      modules_defaults:
+        yum:
+          install_weak_deps: false   # default is 'true'
+
+**Example module_default C** for disabling installation of package recommends on Debian systems
+
+    - hosts: cluster
+      modules_defaults:
+        apt:
+          install_recommends: false  # default is 'null' - depends on OS configuration
+
+NOTE: The `module_defaults` only applies to options that are not specified in task - you cannot override value that is set by task in this role, only the value of options that are not used can be changed.
 
 Example Playbook
 ----------------
