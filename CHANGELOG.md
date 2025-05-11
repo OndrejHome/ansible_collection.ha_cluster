@@ -1,5 +1,10 @@
 ## Changelog
 
+### version 1.0.5
+- merge change from upstream git repositories
+  - ondrejhome.pcs-modules-2 (35.0.0)
+  - ondrejhome.ha-cluster-pacemaker (47.0.0)
+
 ### version 1.0.4
 - merge change from upstream git repositories
   - ondrejhome.pcs-modules-2 (33.0.0)
