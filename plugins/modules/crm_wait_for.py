@@ -64,7 +64,7 @@ options:
     default: 2
   node_list:
     description:
-      - "List of nodes on which the desired stated is expected (only for 'Started'/'Stopped'/'Master'/'Slave' states."
+      - "List of nodes on which the desired stated is expected (only for 'Started'/'Stopped'/'Master'/'Slave'/'Promoted'/'Unpromoted' states."
       - "For state 'Stopped' the default is 'all cluster nodes', while for other states the default is 'any node'."
     required: false
     default: []
@@ -131,7 +131,7 @@ cluster_nodes:
   type: list
   sample: ['node-a', 'node-b']
 rsc_active_node_set:
-  description: (Only present when state is 'Stopped'/'Started'/'Master'/'Slave'). List of nodes where resource is in desired state.
+  description: (Only present when state is 'Stopped'/'Started'/'Master'/'Slave'/'Promoted'/'Unpromoted'). List of nodes where resource is in desired state.
   returned: always
   type: list
   sample: ['node-b']
@@ -163,7 +163,7 @@ def get_crm_data(module):
 def run_module():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default="present", choices=['present', 'absent', 'Started', 'Stopped', 'Master', 'Slave']),
+            state=dict(default="present", choices=['present', 'absent', 'Started', 'Stopped', 'Master', 'Slave', 'Promoted', 'Unpromoted']),
             resource=dict(required=True),
             delay=dict(type='int', default=0),
             timeout=dict(type='int', default=60),
