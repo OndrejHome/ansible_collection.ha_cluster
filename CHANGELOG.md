@@ -1,5 +1,10 @@
 ## Changelog
 
+### version 1.0.6
+- merge changes from upstream git repositories
+  - ondrejhome.pcs-modules-2 (36.0.0)
+  - ondrejhome.crm_wait_for (0.0.4)
+
 ### version 1.0.5
 - merge change from upstream git repositories
   - ondrejhome.pcs-modules-2 (35.0.0)
