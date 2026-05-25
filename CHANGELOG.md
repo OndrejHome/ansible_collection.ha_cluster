@@ -1,5 +1,9 @@
 ## Changelog
 
+### version 1.0.7
+- merge changes from upstream git repositories
+  - ondrejhome.pcs-modules-2 (37.0.0)
+
 ### version 1.0.6
 - merge changes from upstream git repositories
   - ondrejhome.pcs-modules-2 (36.0.0)
